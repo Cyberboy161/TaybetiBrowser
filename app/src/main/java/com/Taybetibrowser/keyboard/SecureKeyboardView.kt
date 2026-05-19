@@ -39,28 +39,28 @@ class SecureKeyboardView @JvmOverloads constructor(
         listOf("q","w","e","r","t","y","u","i","o","p"),
         listOf("a","s","d","f","g","h","j","k","l"),
         listOf("⇧","z","x","c","v","b","n","m","⌫"),
-        listOf("123","🌐","space","▼","Go")
+        listOf("123","paste","🌐","space","▼","Go")
     )
 
     private val deRows = listOf(
         listOf("q","w","e","r","t","z","u","i","o","p","ü"),
         listOf("a","s","d","f","g","h","j","k","l","ö","ä"),
         listOf("⇧","y","x","c","v","b","n","m","ß","⌫"),
-        listOf("123","🌐","space","▼","Go")
+        listOf("123","paste","🌐","space","▼","Go")
     )
 
     private val ckRows = listOf(
         listOf("و","ە","ر","ت","ی","ۆ","پ","چ","ژ","ن"),
         listOf("م","ه","ێ","ل","ک","گ","س","ب","ف","ئ"),
         listOf("⇧","ش","ڕ","ق","د","ج","خ","ح","ز","⌫"),
-        listOf("123","🌐","space","▼","Go")
+        listOf("123","paste","🌐","space","▼","Go")
     )
 
     private val numRows = listOf(
         listOf("1","2","3","4","5","6","7","8","9","0"),
         listOf("@","#","$","%","-","+","(",")","/"),
         listOf(".",",","!","?","\"","'","↵","⌫"),
-        listOf("123","🌐","space","▼","Go")
+        listOf("123","paste","🌐","space","▼","Go")
     )
 
     init {
@@ -106,12 +106,13 @@ class SecureKeyboardView @JvmOverloads constructor(
 
             for (key in row) {
                 val weight = when (key) {
-                    "space" -> 2.5f
-                    "Go" -> 0.8f
+                    "space" -> 2f
+                    "Go" -> 0.7f
                     "▼" -> 0.5f
-                    "123", "ABC", "EN", "🌐" -> 0.7f
-                    "⌫", "↵" -> 0.7f
-                    "⇧" -> 0.7f
+                    "paste" -> 0.7f
+                    "123", "ABC", "EN", "🌐" -> 0.6f
+                    "⌫", "↵" -> 0.6f
+                    "⇧" -> 0.6f
                     else -> 1f
                 }
                 addKey(rowLayout, key, weight)
@@ -121,11 +122,14 @@ class SecureKeyboardView @JvmOverloads constructor(
     }
 
     private fun addKey(container: LinearLayout, key: String, weight: Float = 1f) {
-        val normalColor = when (key) {
-            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧" -> context.getColor(R.color.keyboard_special_key)
-            else -> context.getColor(R.color.keyboard_key)
+        val normalBg = when (key) {
+            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste" -> context.getDrawable(R.drawable.key_special_normal)
+            else -> context.getDrawable(R.drawable.key_background)
         }
-        val pressedColor = context.getColor(R.color.keyboard_key_pressed)
+        val pressedBg = when (key) {
+            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste" -> context.getDrawable(R.drawable.key_special_pressed)
+            else -> context.getDrawable(R.drawable.key_pressed)
+        }
 
         val button = Button(context).apply {
             text = when (key) {
@@ -144,7 +148,7 @@ class SecureKeyboardView @JvmOverloads constructor(
                 "🌐" -> 11f
                 else -> 16f
             }
-            setBackgroundColor(normalColor)
+            background = normalBg
             setTextColor(context.getColor(R.color.keyboard_key_text))
             isAllCaps = false
 
@@ -158,11 +162,11 @@ class SecureKeyboardView @JvmOverloads constructor(
             setOnTouchListener { v, event ->
                 when (event.action) {
                     android.view.MotionEvent.ACTION_DOWN -> {
-                        setBackgroundColor(pressedColor)
+                        background = pressedBg
                         false
                     }
                     android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        setBackgroundColor(normalColor)
+                        background = normalBg
                         false
                     }
                     else -> false
@@ -173,12 +177,12 @@ class SecureKeyboardView @JvmOverloads constructor(
                 setOnTouchListener { _, event ->
                     when (event.action) {
                         android.view.MotionEvent.ACTION_DOWN -> {
-                            setBackgroundColor(pressedColor)
+                            background = pressedBg
                             startDeleteRepeat()
                             true
                         }
                         android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                            setBackgroundColor(normalColor)
+                            background = normalBg
                             stopDeleteRepeat()
                             true
                         }
@@ -189,7 +193,7 @@ class SecureKeyboardView @JvmOverloads constructor(
         }
 
         val params = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight)
-        params.setMargins(1, 1, 1, 1)
+        params.setMargins(3, 2, 3, 2)
         button.layoutParams = params
         container.addView(button)
     }
@@ -263,6 +267,33 @@ class SecureKeyboardView @JvmOverloads constructor(
                 mode = KeyboardMode.EN
                 isShifted = false
                 setupKeyboard()
+            }
+            "paste" -> {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val text = clipboard.primaryClip?.getItemAt(0)?.text?.toString()
+                if (!text.isNullOrEmpty()) {
+                    if (webView != null && webElementId != null) {
+                        val escaped = text.replace("'", "\\'").replace("\\", "\\\\").replace("\n", "\\n")
+                        webView?.evaluateJavascript(
+                            """
+                            (function() {
+                                var el = document.getElementById('$webElementId');
+                                if (!el) el = document.activeElement;
+                                if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) {
+                                    var s = el.selectionStart || el.value.length;
+                                    var v = el.value || '';
+                                    el.value = v.substring(0, s) + '$escaped' + v.substring(s);
+                                    el.setSelectionRange(s + '$escaped'.length, s + '$escaped'.length);
+                                    el.dispatchEvent(new Event('input', {bubbles: true}));
+                                }
+                            })();
+                            """.trimIndent(),
+                            null
+                        )
+                    } else {
+                        editText?.text?.insert(editText?.selectionStart ?: 0, text)
+                    }
+                }
             }
             "⌫" -> {
                 if (!isDeleteRepeating) {

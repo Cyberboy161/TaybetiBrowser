@@ -19,10 +19,10 @@
     <color name="insecure">#FF4444</color>
 
     <color name="keyboard_background">#12121C</color>
-    <color name="keyboard_key">#252540</color>
-    <color name="keyboard_key_pressed">#35355A</color>
+    <color name="keyboard_key">#2A2A40</color>
+    <color name="keyboard_key_pressed">#3A3A55</color>
     <color name="keyboard_key_text">#FFFFFF</color>
-    <color name="keyboard_special_key">#1A1A2E</color>
+    <color name="keyboard_special_key">#1E1E30</color>
 
     <color name="divider">#303045</color>
     <color name="overlay">#80000000</color>
