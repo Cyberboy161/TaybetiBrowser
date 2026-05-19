@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="keyboard_height">220dp</dimen>
+    <dimen name="key_height">48dp</dimen>
+    <dimen name="key_margin">4dp</dimen>
+    <dimen name="key_text_size">18sp</dimen>
+    <dimen name="url_bar_padding">12dp</dimen>
+    <dimen name="security_indicator_size">20dp</dimen>
+    <dimen name="tab_item_height">64dp</dimen>
+    <dimen name="drawer_width">300dp</dimen>
+    <dimen name="corner_radius">8dp</dimen>
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+</resources>

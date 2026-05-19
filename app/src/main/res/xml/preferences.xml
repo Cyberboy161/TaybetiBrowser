@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/pref_category_privacy"
+        app:iconSpaceReserved="false">
+
+        <ListPreference
+            android:key="tracking_protection"
+            android:title="@string/pref_tracking_protection"
+            android:summary="@string/pref_tracking_protection_summary"
+            android:defaultValue="STRICT"
+            android:entries="@array/tracking_protection_entries"
+            android:entryValues="@array/tracking_protection_values"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="doh"
+            android:title="@string/pref_dns_over_https"
+            android:summary="@string/pref_dns_over_https_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:key="doh_provider"
+            android:title="@string/pref_dns_provider"
+            android:defaultValue="CLOUDFLARE"
+            android:entries="@array/dns_provider_entries"
+            android:entryValues="@array/dns_provider_values"
+            android:dependency="doh"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_security"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:key="https_only"
+            android:title="@string/pref_https_only"
+            android:summary="@string/pref_https_only_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="js_enabled"
+            android:title="@string/pref_javascript"
+            android:summary="@string/pref_javascript_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="secure_keyboard"
+            android:title="@string/pref_secure_keyboard"
+            android:summary="@string/pref_secure_keyboard_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_keyboard"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:key="key_randomization"
+            android:title="@string/pref_key_randomization"
+            android:summary="@string/pref_key_randomization_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="haptic_feedback"
+            android:title="@string/pref_haptic_feedback"
+            android:summary="@string/pref_haptic_feedback_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_data"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:key="clear_on_exit"
+            android:title="@string/pref_clear_on_exit"
+            android:summary="@string/pref_clear_on_exit_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="clear_now"
+            android:title="@string/pref_clear_now"
+            android:summary="@string/pref_clear_now_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

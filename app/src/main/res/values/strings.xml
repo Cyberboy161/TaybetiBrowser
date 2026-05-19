@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Taybeti Browser</string>
+    <string name="settings_title">Settings</string>
+    <string name="url_bar_hint">Search or enter address</string>
+    <string name="security_secure">Secure Connection</string>
+    <string name="security_insecure">Insecure Connection</string>
+    <string name="security_mixed">Mixed Content</string>
+    <string name="new_tab">New Tab</string>
+    <string name="close_tab">Close Tab</string>
+    <string name="tabs_title">Tabs (%d)</string>
+    <string name="clear_data">Clear All Data</string>
+    <string name="clear_data_confirm">Clear all browsing data? This cannot be undone.</string>
+    <string name="back">Back</string>
+    <string name="forward">Forward</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Settings</string>
+
+    <!-- Settings Categories -->
+    <string name="pref_category_privacy">Privacy</string>
+    <string name="pref_category_security">Security</string>
+    <string name="pref_category_keyboard">Keyboard</string>
+    <string name="pref_category_data">Data</string>
+
+    <!-- Privacy Settings -->
+    <string name="pref_tracking_protection">Tracking Protection</string>
+    <string name="pref_tracking_protection_summary">Block trackers and fingerprinters</string>
+    <string name="pref_cookie_policy">Cookie Policy</string>
+    <string name="pref_cookie_policy_summary">Accept only first-party cookies</string>
+    <string name="pref_dns_over_https">DNS over HTTPS</string>
+    <string name="pref_dns_over_https_summary">Encrypt DNS queries</string>
+    <string name="pref_dns_provider">DNS Provider</string>
+
+    <!-- Security Settings -->
+    <string name="pref_https_only">HTTPS-Only Mode</string>
+    <string name="pref_https_only_summary">Upgrade all connections to HTTPS</string>
+    <string name="pref_javascript">JavaScript</string>
+    <string name="pref_javascript_summary">Enable JavaScript (disabling may break sites)</string>
+    <string name="pref_secure_keyboard">Secure Keyboard</string>
+    <string name="pref_secure_keyboard_summary">Use built-in keyboard (bypasses system IME)</string>
+
+    <!-- Keyboard Settings -->
+    <string name="pref_key_randomization">Key Randomization</string>
+    <string name="pref_key_randomization_summary">Randomize key positions (anti-keylogger)</string>
+    <string name="pref_haptic_feedback">Haptic Feedback</string>
+    <string name="pref_haptic_feedback_summary">Vibrate on key press</string>
+
+    <!-- Data Settings -->
+    <string name="pref_clear_on_exit">Clear Data on Exit</string>
+    <string name="pref_clear_on_exit_summary">Purge all browsing data when app closes</string>
+    <string name="pref_clear_now">Clear Data Now</string>
+    <string name="pref_clear_now_summary">Immediately clear all browsing data</string>
+
+    <!-- DNS Providers -->
+    <string name="dns_cloudflare">Cloudflare</string>
+    <string name="dns_quad9">Quad9</string>
+    <string name="dns_nextdns">NextDNS</string>
+
+    <!-- Tracking Protection Levels -->
+    <string name="tp_none">None</string>
+    <string name="tp_standard">Standard</string>
+    <string name="tp_strict">Strict</string>
+</resources>
