@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="10dp"
+    android:background="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/clipboard_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary"
+            android:maxLines="2"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/clipboard_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="@color/text_hint"
+            android:layout_marginTop="2dp"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/clipboard_copy"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@android:drawable/ic_menu_edit"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="4dp"
+        android:tint="@color/accent"
+        android:contentDescription="Copy"/>
+
+    <ImageView
+        android:id="@+id/clipboard_delete"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="4dp"
+        android:tint="@color/insecure"
+        android:contentDescription="Delete"/>
+</LinearLayout>

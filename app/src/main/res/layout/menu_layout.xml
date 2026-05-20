@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/menu_background"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@android:drawable/ic_menu_compass"
+                android:tint="@color/accent"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Taybeti Browser"
+                android:textSize="17sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:layout_marginStart="10dp"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="NAVIGATION"
+            android:textSize="11sp"
+            android:textColor="@color/accent"
+            android:letterSpacing="0.15"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/menu_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_add"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/accent"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tabs"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/tabs_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 tab"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_bookmarks"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_save"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bookmarks"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_history"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="History"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_downloads"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_upload"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Downloads"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_clipboard"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clipboard"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SECURITY"
+            android:textSize="11sp"
+            android:textColor="@color/accent"
+            android:letterSpacing="0.15"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/menu_passwords"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_lock_lock"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Saved Passwords"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_privacy"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_secure"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Privacy Settings"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@android:drawable/ic_media_play"
+                android:tint="@color/text_hint"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_vpn"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_lock_lock"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/accent"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="VPN Protection"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/vpn_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="APPEARANCE"
+            android:textSize="11sp"
+            android:textColor="@color/accent"
+            android:letterSpacing="0.15"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/menu_theme"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_day"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/text_secondary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Theme"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/theme_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dark"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menu_adblock"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/menu_item_background"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:layout_marginEnd="14dp"
+                android:tint="@color/accent"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ad Blocker"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/adblock_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="On"
+                android:textSize="12sp"
+                android:textColor="@color/secure"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Taybeti Browser v1.0.0"
+            android:textSize="12sp"
+            android:textColor="@color/text_hint"
+            android:gravity="center"/>
+    </LinearLayout>
+</ScrollView>

@@ -12,6 +12,7 @@ import android.webkit.WebView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Toast
 import com.Taybetibrowser.R
 
 class SecureKeyboardView @JvmOverloads constructor(
@@ -34,34 +35,92 @@ class SecureKeyboardView @JvmOverloads constructor(
 
     enum class KeyboardMode { EN, DE, CKB, NUM }
     private var mode = KeyboardMode.EN
+    private var pasteEnabled = false
+    private var copyEnabled = false
 
-    private val enRows = listOf(
-        listOf("q","w","e","r","t","y","u","i","o","p"),
-        listOf("a","s","d","f","g","h","j","k","l"),
-        listOf("⇧","z","x","c","v","b","n","m","⌫"),
-        listOf("123","paste","🌐","space","▼","Go")
-    )
+    private fun getEnRows(): List<List<String>> {
+        val lastRow = if (pasteEnabled || copyEnabled) {
+            if (copyEnabled && pasteEnabled) {
+                listOf("123","copy","paste","🌐","space","▼","Go")
+            } else if (copyEnabled) {
+                listOf("123","copy","🌐","space","▼","Go")
+            } else {
+                listOf("123","paste","🌐","space","▼","Go")
+            }
+        } else {
+            listOf("123","🌐","space","▼","Go")
+        }
 
-    private val deRows = listOf(
-        listOf("q","w","e","r","t","z","u","i","o","p","ü"),
-        listOf("a","s","d","f","g","h","j","k","l","ö","ä"),
-        listOf("⇧","y","x","c","v","b","n","m","ß","⌫"),
-        listOf("123","paste","🌐","space","▼","Go")
-    )
+        return listOf(
+            listOf("q","w","e","r","t","y","u","i","o","p"),
+            listOf("a","s","d","f","g","h","j","k","l"),
+            listOf("⇧","z","x","c","v","b","n","m","⌫"),
+            lastRow
+        )
+    }
 
-    private val ckRows = listOf(
-        listOf("و","ە","ر","ت","ی","ۆ","پ","چ","ژ","ن"),
-        listOf("م","ه","ێ","ل","ک","گ","س","ب","ف","ئ"),
-        listOf("⇧","ش","ڕ","ق","د","ج","خ","ح","ز","⌫"),
-        listOf("123","paste","🌐","space","▼","Go")
-    )
+    private fun getDeRows(): List<List<String>> {
+        val lastRow = if (pasteEnabled || copyEnabled) {
+            if (copyEnabled && pasteEnabled) {
+                listOf("123","copy","paste","🌐","space","▼","Go")
+            } else if (copyEnabled) {
+                listOf("123","copy","🌐","space","▼","Go")
+            } else {
+                listOf("123","paste","🌐","space","▼","Go")
+            }
+        } else {
+            listOf("123","🌐","space","▼","Go")
+        }
 
-    private val numRows = listOf(
-        listOf("1","2","3","4","5","6","7","8","9","0"),
-        listOf("@","#","$","%","-","+","(",")","/"),
-        listOf(".",",","!","?","\"","'","↵","⌫"),
-        listOf("123","paste","🌐","space","▼","Go")
-    )
+        return listOf(
+            listOf("q","w","e","r","t","z","u","i","o","p","ü"),
+            listOf("a","s","d","f","g","h","j","k","l","ö","ä"),
+            listOf("⇧","y","x","c","v","b","n","m","ß","⌫"),
+            lastRow
+        )
+    }
+
+    private fun getCkRows(): List<List<String>> {
+        val lastRow = if (pasteEnabled || copyEnabled) {
+            if (copyEnabled && pasteEnabled) {
+                listOf("123","copy","paste","🌐","space","▼","Go")
+            } else if (copyEnabled) {
+                listOf("123","copy","🌐","space","▼","Go")
+            } else {
+                listOf("123","paste","🌐","space","▼","Go")
+            }
+        } else {
+            listOf("123","🌐","space","▼","Go")
+        }
+
+        return listOf(
+            listOf("و","ە","ر","ت","ی","ۆ","پ","چ","ژ","ن"),
+            listOf("م","ه","ێ","ل","ک","گ","س","ب","ف","ئ"),
+            listOf("⇧","ش","ڕ","ق","د","ج","خ","ح","ز","⌫"),
+            lastRow
+        )
+    }
+
+    private fun getNumRows(): List<List<String>> {
+        val lastRow = if (pasteEnabled || copyEnabled) {
+            if (copyEnabled && pasteEnabled) {
+                listOf("ABC","copy","paste","🌐","space","▼","Go")
+            } else if (copyEnabled) {
+                listOf("ABC","copy","🌐","space","▼","Go")
+            } else {
+                listOf("ABC","paste","🌐","space","▼","Go")
+            }
+        } else {
+            listOf("ABC","🌐","space","▼","Go")
+        }
+
+        return listOf(
+            listOf("1","2","3","4","5","6","7","8","9","0"),
+            listOf("@","#","$","%","-","+","(",")","/"),
+            listOf(".",",","!","?","\"","'","↵","⌫"),
+            lastRow
+        )
+    }
 
     init {
         orientation = VERTICAL
@@ -85,14 +144,28 @@ class SecureKeyboardView @JvmOverloads constructor(
         hapticEnabled = enabled
     }
 
-    private fun setupKeyboard() {
+    fun setPasteEnabled(enabled: Boolean) {
+        pasteEnabled = enabled
+    }
+
+    fun setCopyEnabled(enabled: Boolean) {
+        copyEnabled = enabled
+    }
+
+    private var keyRandomizationEnabled = false
+
+    fun setKeyRandomization(enabled: Boolean) {
+        keyRandomizationEnabled = enabled
+    }
+
+    fun setupKeyboard() {
         removeAllViews()
 
         when (mode) {
-            KeyboardMode.EN -> setupRows(enRows)
-            KeyboardMode.DE -> setupRows(deRows)
-            KeyboardMode.CKB -> setupRows(ckRows)
-            KeyboardMode.NUM -> setupRows(numRows)
+            KeyboardMode.EN -> setupRows(getEnRows())
+            KeyboardMode.DE -> setupRows(getDeRows())
+            KeyboardMode.CKB -> setupRows(getCkRows())
+            KeyboardMode.NUM -> setupRows(getNumRows())
         }
     }
 
@@ -104,7 +177,13 @@ class SecureKeyboardView @JvmOverloads constructor(
                 gravity = Gravity.CENTER_HORIZONTAL
             }
 
-            for (key in row) {
+            var processedRow = if (keyRandomizationEnabled && row.size > 3 && !row.contains("space") && !row.contains("Go") && !row.contains("▼") && !row.contains("paste") && !row.contains("123") && !row.contains("🌐")) {
+                row.shuffled()
+            } else {
+                row
+            }
+
+            for (key in processedRow) {
                 val weight = when (key) {
                     "space" -> 2f
                     "Go" -> 0.7f
@@ -123,11 +202,11 @@ class SecureKeyboardView @JvmOverloads constructor(
 
     private fun addKey(container: LinearLayout, key: String, weight: Float = 1f) {
         val normalBg = when (key) {
-            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste" -> context.getDrawable(R.drawable.key_special_normal)
+            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_normal)
             else -> context.getDrawable(R.drawable.key_background)
         }
         val pressedBg = when (key) {
-            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste" -> context.getDrawable(R.drawable.key_special_pressed)
+            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_pressed)
             else -> context.getDrawable(R.drawable.key_pressed)
         }
 
@@ -293,6 +372,19 @@ class SecureKeyboardView @JvmOverloads constructor(
                     } else {
                         editText?.text?.insert(editText?.selectionStart ?: 0, text)
                     }
+                }
+            }
+            "copy" -> {
+                val textToCopy: String
+                if (webView != null && webElementId != null) {
+                    textToCopy = ""
+                    Toast.makeText(context, "Copy from web fields opens clipboard menu", Toast.LENGTH_SHORT).show()
+                } else {
+                    textToCopy = editText?.text?.toString() ?: ""
+                }
+                if (textToCopy.isNotEmpty()) {
+                    (context as? com.Taybetibrowser.MainActivity)?.internalClipboard?.copy(textToCopy)
+                    Toast.makeText(context, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
                 }
             }
             "⌫" -> {

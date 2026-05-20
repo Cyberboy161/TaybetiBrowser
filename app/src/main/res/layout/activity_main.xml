@@ -6,54 +6,120 @@
     android:background="@color/background"
     android:fitsSystemWindows="true">
 
+    <HorizontalScrollView
+        android:id="@+id/tabs_container"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/surface"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/tabs_row"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="4dp">
+
+            <ImageButton
+                android:id="@+id/btn_new_tab"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_input_add"
+                android:tint="@color/accent"
+                android:contentDescription="New tab" />
+
+            <TextView
+                android:id="@+id/tab_indicator_1"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="@drawable/tab_indicator"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:background="@color/surface"
         android:paddingHorizontal="8dp"
-        android:paddingTop="8dp">
+        android:gravity="center_vertical">
 
         <ImageButton
             android:id="@+id/btn_back"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
+            android:src="@drawable/ic_arrow_back"
+            android:tint="@color/text_primary"
             android:contentDescription="Back" />
 
         <ImageButton
             android:id="@+id/btn_forward"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_send"
+            android:src="@drawable/ic_arrow_forward"
+            android:tint="@color/text_primary"
             android:contentDescription="Forward" />
 
-        <EditText
-            android:id="@+id/url_bar"
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
             android:layout_marginHorizontal="8dp"
-            android:background="@color/surface_variant"
-            android:hint="Search or enter URL"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_hint"
-            android:paddingHorizontal="12dp"
-            android:inputType="textUri"
-            android:imeOptions="actionGo"
-            android:importantForAutofill="no"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
+            android:background="@drawable/search_bar_background">
+
+            <com.Taybetibrowser.NoSystemKeyboardEditText
+                android:id="@+id/url_bar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:hint="Search or enter URL"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:paddingHorizontal="36dp"
+                android:inputType="textUri"
+                android:imeOptions="actionGo"
+                android:importantForAutofill="no"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:singleLine="true" />
+
+            <ImageButton
+                android:id="@+id/btn_bookmark"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/btn_star_big_off"
+                android:tint="@color/text_secondary"
+                android:contentDescription="Bookmark" />
+
+        </FrameLayout>
 
         <ImageButton
             android:id="@+id/btn_refresh"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_popup_sync"
+            android:tint="@color/text_primary"
             android:contentDescription="Refresh" />
+
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_menu_hamburger"
+            android:tint="@color/text_primary"
+            android:contentDescription="Menu" />
 
     </LinearLayout>
 

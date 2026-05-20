@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/privacy_back"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Back"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginVertical="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Privacy &amp; Security"
+            android:textSize="14sp"
+            android:textColor="@color/accent"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/privacy_webrtc"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_call"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Block WebRTC"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/webrtc_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_canvas"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Canvas Noise"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/canvas_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_referrer"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_share"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Spoof Referrer"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/referrer_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_stealth"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_compass"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Stealth Mode"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/stealth_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_useragent"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_view"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Spoof User Agent"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/useragent_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginVertical="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Security"
+            android:textSize="14sp"
+            android:textColor="@color/accent"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/privacy_keyboard"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_dialog_info"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Secure Keyboard"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/keyboard_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_haptic"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_view"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Haptic Feedback"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/haptic_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_random"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Key Randomization"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/random_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_paste"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Paste Button"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/paste_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/privacy_copy"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_share"
+                android:layout_marginEnd="16dp"
+                android:tint="@color/text_primary"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Copy Button"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/copy_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

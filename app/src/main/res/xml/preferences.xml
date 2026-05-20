@@ -6,6 +6,48 @@
         android:title="@string/pref_category_privacy"
         app:iconSpaceReserved="false">
 
+        <SwitchPreferenceCompat
+            android:key="webrtc_block"
+            android:title="@string/pref_webrtc_block"
+            android:summary="@string/pref_webrtc_block_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="canvas_noise"
+            android:title="@string/pref_canvas_noise"
+            android:summary="@string/pref_canvas_noise_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="spoof_user_agent"
+            android:title="@string/pref_spoof_user_agent"
+            android:summary="@string/pref_spoof_user_agent_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="stealth_mode"
+            android:title="@string/pref_stealth_mode"
+            android:summary="@string/pref_stealth_mode_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="referrer_policy"
+            android:title="@string/pref_referrer_policy"
+            android:summary="@string/pref_referrer_policy_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="https_upgrade"
+            android:title="@string/pref_https_upgrade"
+            android:summary="@string/pref_https_upgrade_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
         <ListPreference
             android:key="tracking_protection"
             android:title="@string/pref_tracking_protection"
@@ -19,7 +61,7 @@
             android:key="doh"
             android:title="@string/pref_dns_over_https"
             android:summary="@string/pref_dns_over_https_summary"
-            android:defaultValue="true"
+            android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <ListPreference
@@ -41,7 +83,7 @@
             android:key="https_only"
             android:title="@string/pref_https_only"
             android:summary="@string/pref_https_only_summary"
-            android:defaultValue="true"
+            android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Privacy Settings"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:paddingBottom="16dp"/>
+
+        <LinearLayout
+            android:id="@+id/toggle_webrtc"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Block WebRTC"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_webrtc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_canvas"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Canvas Protection"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_canvas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_useragent"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Spoof User Agent"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_useragent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_stealth"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Stealth Mode"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_stealth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_referrer"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Referrer Policy"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_referrer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_https"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="HTTPS Upgrade"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_https"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_keyrand"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Key Randomization"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_keyrand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_haptic"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Haptic Feedback"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_haptic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/toggle_paste"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Paste Button"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <CheckBox
+                android:id="@+id/check_paste"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/accent"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
