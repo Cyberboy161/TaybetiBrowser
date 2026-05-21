@@ -238,14 +238,13 @@ private fun setupWebView() {
                 if (window.__taybetiSelectionInstalled) return;
                 window.__taybetiSelectionInstalled = true;
 
-                var selectionPopup = null;
                 var selectionMarker = null;
                 var leftHandle = null;
                 var rightHandle = null;
                 var longPressTimer = null;
                 var longPressX = 0;
                 var longPressY = 0;
-                var hasSelection = false;
+                var isSelecting = false;
 
                 document.addEventListener('contextmenu', function(e) {
                     e.preventDefault();
@@ -266,126 +265,49 @@ private fun setupWebView() {
                 }
 
                 function removeSelectionUI() {
-                    if (selectionPopup) {
-                        selectionPopup.remove();
-                        selectionPopup = null;
-                    }
-                    if (selectionMarker) {
-                        selectionMarker.remove();
-                        selectionMarker = null;
-                    }
-                    if (leftHandle) {
-                        leftHandle.remove();
-                        leftHandle = null;
-                    }
-                    if (rightHandle) {
-                        rightHandle.remove();
-                        rightHandle = null;
-                    }
+                    if (selectionMarker) { selectionMarker.remove(); selectionMarker = null; }
+                    if (leftHandle) { leftHandle.remove(); leftHandle = null; }
+                    if (rightHandle) { rightHandle.remove(); rightHandle = null; }
                 }
+
+                window.__taybetiRemoveSelectionUI = removeSelectionUI;
 
                 function selectWordAtPoint(x, y) {
                     var sel = window.getSelection();
                     sel.removeAllRanges();
 
-                    var el = document.elementFromPoint(x, y);
-                    if (!el) return false;
+                    var range = document.caretRangeFromPoint(x, y);
+                    if (!range) return false;
 
-                    var textNodes = [];
-                    function collectTextNodes(node) {
-                        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
-                            textNodes.push(node);
-                        } else {
-                            for (var i = 0; i < node.childNodes.length; i++) {
-                                collectTextNodes(node.childNodes[i]);
-                            }
-                        }
+                    var node = range.startContainer;
+                    if (node.nodeType !== Node.TEXT_NODE) return false;
+
+                    var text = node.textContent;
+                    var offset = range.startOffset;
+
+                    if (offset >= text.length) offset = text.length - 1;
+                    if (offset < 0) return false;
+
+                    var char = text[offset];
+                    if (char === ' ' || char === '\n' || char === '\t') return false;
+
+                    var start = offset;
+                    var end = offset;
+
+                    while (start > 0 && text[start - 1] !== ' ' && text[start - 1] !== '\n' && text[start - 1] !== '\t') {
+                        start--;
                     }
-                    collectTextNodes(el);
 
-                    if (textNodes.length === 0) {
-                        var parent = el.parentElement || el.parentNode;
-                        if (parent) collectTextNodes(parent);
+                    while (end < text.length && text[end] !== ' ' && text[end] !== '\n' && text[end] !== '\t') {
+                        end++;
                     }
 
-                    for (var i = 0; i < textNodes.length; i++) {
-                        var node = textNodes[i];
-                        var text = node.textContent;
-                        var range = document.createRange();
+                    var wordRange = document.createRange();
+                    wordRange.setStart(node, start);
+                    wordRange.setEnd(node, end);
+                    sel.addRange(wordRange);
 
-                        var rect = node.parentElement ? node.parentElement.getBoundingClientRect() : null;
-                        if (!rect) continue;
-
-                        var relX = x - rect.left;
-                        var charIndex = Math.floor((relX / rect.width) * text.length);
-                        charIndex = Math.max(0, Math.min(text.length - 1, charIndex));
-
-                        var start = charIndex;
-                        var end = charIndex;
-
-                        while (start > 0 && !/[\s\p{P}]/u.test(text[start - 1])) start--;
-                        while (end < text.length && !/[\s\p{P}]/u.test(text[end])) end++;
-
-                        if (start === end && text.length > 0) {
-                            end = text.length;
-                            start = 0;
-                        }
-
-                        if (end > start) {
-                            try {
-                                range.setStart(node, start);
-                                range.setEnd(node, end);
-                                sel.addRange(range);
-                                return sel.toString().length > 0;
-                            } catch(e) {}
-                        }
-                    }
-                    return false;
-                }
-
-                function expandSelectionToParagraph() {
-                    var sel = window.getSelection();
-                    if (sel.rangeCount === 0) return;
-
-                    var range = sel.getRangeAt(0);
-                    var text = range.toString();
-
-                    if (text.length < 50) {
-                        var expandedRange = document.createRange();
-                        expandedRange.setStart(range.startContainer, range.startOffset);
-
-                        var endNode = range.endContainer;
-                        var endOffset = range.endOffset;
-
-                        while (endNode && endNode.nodeType === Node.TEXT_NODE) {
-                            var fullText = endNode.textContent;
-                            var searchStart = endOffset;
-                            var foundEnd = -1;
-
-                            for (var i = searchStart; i < fullText.length; i++) {
-                                if (fullText[i] === '\n' || (i > 0 && fullText[i-1] === '.' && (i+1 >= fullText.length || fullText[i+1] === ' ' || fullText[i+1] === '\n'))) {
-                                    foundEnd = i + 1;
-                                    break;
-                                }
-                            }
-
-                            if (foundEnd > 0) {
-                                expandedRange.setEnd(endNode, foundEnd);
-                                break;
-                            }
-
-                            if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.TEXT_NODE) {
-                                endNode = endNode.nextSibling;
-                                endOffset = 0;
-                            } else {
-                                expandedRange.setEnd(endNode, endNode.textContent.length);
-                                break;
-                            }
-                        }
-
-                        sel.removeAllRanges();
-                        sel.addRange(expandedRange);
-                    }
+                    return sel.toString().length > 0;
                 }
 
                 function showSelectionUI() {
@@ -414,12 +336,17 @@ private fun setupWebView() {
 
                     if (leftRect) {
                         leftHandle = document.createElement('div');
-                        leftHandle.style.cssText = 'position:fixed;z-index:999999;width:28px;height:28px;' +
-                            'left:' + (leftRect.left - 14) + 'px;top:' + (leftRect.top + leftRect.height/2 - 14) + 'px;' +
+                        leftHandle.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
+                            'left:' + (leftRect.left - 16) + 'px;top:' + (leftRect.top + leftRect.height/2 - 16) + 'px;' +
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                            'color:#000;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+                            'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         leftHandle.innerHTML = '◀';
                         leftHandle.ontouchstart = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.$jsInterfaceName.shrinkSelectionLeft();
+                        };
+                        leftHandle.onclick = function(e) {
                             e.preventDefault();
                             e.stopPropagation();
                             window.$jsInterfaceName.shrinkSelectionLeft();
@@ -429,12 +356,17 @@ private fun setupWebView() {
 
                     if (rightRect) {
                         rightHandle = document.createElement('div');
-                        rightHandle.style.cssText = 'position:fixed;z-index:999999;width:28px;height:28px;' +
-                            'left:' + (rightRect.right - 14) + 'px;top:' + (rightRect.top + rightRect.height/2 - 14) + 'px;' +
+                        rightHandle.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
+                            'left:' + (rightRect.right - 16) + 'px;top:' + (rightRect.top + rightRect.height/2 - 16) + 'px;' +
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                            'color:#000;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+                            'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         rightHandle.innerHTML = '▶';
                         rightHandle.ontouchstart = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.$jsInterfaceName.expandSelectionRight();
+                        };
+                        rightHandle.onclick = function(e) {
                             e.preventDefault();
                             e.stopPropagation();
                             window.$jsInterfaceName.expandSelectionRight();
@@ -449,6 +381,10 @@ private fun setupWebView() {
                 }
 
                 document.addEventListener('click', function(e) {
+                    if (isSelecting) {
+                        isSelecting = false;
+                        return;
+                    }
                     var input = findInput(e.target);
                     if (input && input.id) {
                         window.$jsInterfaceName.requestInputFocus(input.id);
@@ -471,7 +407,6 @@ private fun setupWebView() {
                         return;
                     }
 
-                    hasSelection = false;
                     longPressX = e.touches[0].clientX;
                     longPressY = e.touches[0].clientY;
 
@@ -482,11 +417,10 @@ private fun setupWebView() {
                     longPressTimer = setTimeout(function() {
                         var result = selectWordAtPoint(longPressX, longPressY);
                         if (result) {
-                            hasSelection = true;
-                            expandSelectionToParagraph();
+                            isSelecting = true;
                             setTimeout(function() {
                                 showSelectionUI();
-                            }, 100);
+                            }, 50);
                         }
                     }, 400);
                 }, {passive: false});
@@ -506,12 +440,12 @@ private fun setupWebView() {
 
                     setTimeout(function() {
                         var selection = window.getSelection();
-                        if (selection && selection.toString().trim().length > 0 && !hasSelection) {
+                        if (selection && selection.toString().trim().length > 0 && !isSelecting) {
                             showSelectionUI();
-                        } else if (!hasSelection) {
+                        } else if (!isSelecting) {
                             removeSelectionUI();
                         }
-                        hasSelection = false;
+                        isSelecting = false;
                     }, 300);
                 }, {passive: true});
 
@@ -520,19 +454,8 @@ private fun setupWebView() {
                         clearTimeout(longPressTimer);
                         longPressTimer = null;
                     }
+                    isSelecting = false;
                 }, {passive: true});
-
-                var selectionTimeout = null;
-                document.addEventListener('selectionchange', function() {
-                    if (selectionTimeout) clearTimeout(selectionTimeout);
-                    selectionTimeout = setTimeout(function() {
-                        var selection = window.getSelection();
-                        if (selection && selection.toString().trim().length > 0 && hasSelection) {
-                            removeSelectionUI();
-                            showSelectionUI();
-                        }
-                    }, 100);
-                });
             })();
         """.trimIndent(), null)
     }
@@ -1033,13 +956,27 @@ private fun setupWebView() {
                             var sel = window.getSelection();
                             if (sel.rangeCount > 0) {
                                 var range = sel.getRangeAt(0);
-                                if (range.endOffset - range.startOffset > 1) {
-                                    range.setStart(range.startContainer, range.startOffset + 1);
-                                } else if (range.startContainer.previousSibling) {
-                                    range.setStart(range.startContainer.previousSibling, 0);
+                                var startNode = range.startContainer;
+                                var startOffset = range.startOffset;
+
+                                if (startOffset > 0) {
+                                    range.setStart(startNode, startOffset - 1);
+                                } else if (startNode.previousSibling) {
+                                    var prev = startNode.previousSibling;
+                                    if (prev.nodeType === Node.TEXT_NODE) {
+                                        range.setStart(prev, prev.length - 1);
+                                    }
                                 }
-                                sel.removeAllRanges();
-                                sel.addRange(range);
+
+                                if (range.startOffset < range.endOffset) {
+                                    sel.removeAllRanges();
+                                    sel.addRange(range);
+                                    var text = sel.toString().trim();
+                                    if (text.length > 0) {
+                                        var rect = range.getBoundingClientRect();
+                                        window.$jsInterfaceName.updateSelectionUI(text, Math.round(rect.left + rect.width / 2), Math.round(rect.top - 10));
+                                    }
+                                }
                             }
                         } catch(e) {}
                     })();
@@ -1057,13 +994,23 @@ private fun setupWebView() {
                             if (sel.rangeCount > 0) {
                                 var range = sel.getRangeAt(0);
                                 var endNode = range.endContainer;
-                                if (endNode.nodeType === Node.TEXT_NODE && range.endOffset < endNode.length) {
-                                    range.setEnd(endNode, range.endOffset + 1);
+                                var endOffset = range.endOffset;
+
+                                if (endOffset < endNode.length) {
+                                    range.setEnd(endNode, endOffset + 1);
                                 } else if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.TEXT_NODE) {
                                     range.setEnd(endNode.nextSibling, 1);
                                 }
-                                sel.removeAllRanges();
-                                sel.addRange(range);
+
+                                if (range.startOffset < range.endOffset) {
+                                    sel.removeAllRanges();
+                                    sel.addRange(range);
+                                    var text = sel.toString().trim();
+                                    if (text.length > 0) {
+                                        var rect = range.getBoundingClientRect();
+                                        window.$jsInterfaceName.updateSelectionUI(text, Math.round(rect.left + rect.width / 2), Math.round(rect.top - 10));
+                                    }
+                                }
                             }
                         } catch(e) {}
                     })();
@@ -1072,78 +1019,154 @@ private fun setupWebView() {
         }
 
         @JavascriptInterface
-        fun showSelectionPopup(text: String, x: Int, y: Int) {
+        fun updateSelectionUI(text: String, x: Int, y: Int) {
             runOnUiThread {
                 if (!prefs.copyButton) return@runOnUiThread
 
-                val popupView = layoutInflater.inflate(R.layout.copy_popup, null)
-                val popup = PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true).apply {
-                    setBackgroundDrawable(getDrawable(android.R.color.transparent))
-                    isOutsideTouchable = true
-                    isFocusable = true
-                    elevation = 12f
-                }
-
-                val copyBtn = popupView.findViewById<TextView>(R.id.popup_copy)
-                val cutBtn = popupView.findViewById<TextView>(R.id.popup_cut)
-                val deleteBtn = popupView.findViewById<TextView>(R.id.popup_delete)
-                val cancelBtn = popupView.findViewById<TextView>(R.id.popup_cancel)
-                val shrinkLeftBtn = popupView.findViewById<TextView>(R.id.popup_shrink_left)
-                val expandRightBtn = popupView.findViewById<TextView>(R.id.popup_expand_right)
-
-                copyBtn.setOnClickListener {
-                    internalClipboard.copy(text)
-                    Toast.makeText(this@MainActivity, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
-                    popup.dismiss()
-                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
-                }
-
-                cutBtn.setOnClickListener {
-                    internalClipboard.copy(text)
-                    webView.evaluateJavascript("""
-                        (function() {
-                            var sel = window.getSelection();
-                            if (sel.rangeCount > 0) {
-                                var range = sel.getRangeAt(0);
-                                range.deleteContents();
+                webView.evaluateJavascript("""
+                    (function() {
+                        try {
+                            if (window.__taybetiRemoveSelectionUI) {
+                                window.__taybetiRemoveSelectionUI();
                             }
-                        })();
-                    """.trimIndent(), null)
-                    Toast.makeText(this@MainActivity, "Cut to secure clipboard", Toast.LENGTH_SHORT).show()
-                    popup.dismiss()
-                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
-                }
 
-                deleteBtn.setOnClickListener {
-                    webView.evaluateJavascript("""
-                        (function() {
                             var sel = window.getSelection();
-                            if (sel.rangeCount > 0) {
-                                var range = sel.getRangeAt(0);
-                                range.deleteContents();
+                            if (!sel || sel.rangeCount === 0) return;
+
+                            var range = sel.getRangeAt(0);
+                            var rect = range.getBoundingClientRect();
+                            if (!rect || rect.width === 0) return;
+
+                            var marker = document.createElement('div');
+                            marker.style.cssText = 'position:fixed;pointer-events:none;z-index:999998;' +
+                                'left:' + rect.left + 'px;top:' + rect.top + 'px;' +
+                                'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
+                                'background:rgba(0,212,170,0.2);border:2px solid #00D4AA;border-radius:4px;';
+                            document.body.appendChild(marker);
+
+                            var leftRect = range.getClientRects()[0];
+                            var rightRect = range.getClientRects()[range.getClientRects().length - 1];
+
+                            if (leftRect) {
+                                var lh = document.createElement('div');
+                                lh.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
+                                    'left:' + (leftRect.left - 16) + 'px;top:' + (leftRect.top + leftRect.height/2 - 16) + 'px;' +
+                                    'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+                                    'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+                                lh.innerHTML = '◀';
+                                lh.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
+                                lh.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
+                                document.body.appendChild(lh);
                             }
-                        })();
-                    """.trimIndent(), null)
-                    Toast.makeText(this@MainActivity, "Deleted", Toast.LENGTH_SHORT).show()
-                    popup.dismiss()
-                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
-                }
 
-                cancelBtn.setOnClickListener {
-                    popup.dismiss()
-                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
-                }
+                            if (rightRect) {
+                                var rh = document.createElement('div');
+                                rh.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
+                                    'left:' + (rightRect.right - 16) + 'px;top:' + (rightRect.top + rightRect.height/2 - 16) + 'px;' +
+                                    'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+                                    'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+                                rh.innerHTML = '▶';
+                                rh.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
+                                rh.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
+                                document.body.appendChild(rh);
+                            }
 
-                shrinkLeftBtn.setOnClickListener {
-                    shrinkSelectionLeft()
-                }
+                            window.__taybetiRemoveSelectionUI = function() {
+                                if (marker) marker.remove();
+                                if (lh) lh.remove();
+                                if (rh) rh.remove();
+                            };
+                        } catch(e) {}
+                    })();
+                """.trimIndent(), null)
 
-                expandRightBtn.setOnClickListener {
-                    expandSelectionRight()
-                }
-
-                popup.showAtLocation(webView, Gravity.NO_GRAVITY, x, y - 150)
+                currentSelectionPopup?.dismiss()
+                displaySelectionPopup(text, x, y)
             }
+        }
+
+        @JavascriptInterface
+        fun showSelectionPopup(text: String, x: Int, y: Int) {
+            runOnUiThread {
+                displaySelectionPopup(text, x, y)
+            }
+        }
+
+        private var currentSelectionPopup: PopupWindow? = null
+
+        private fun displaySelectionPopup(text: String, x: Int, y: Int) {
+            if (!prefs.copyButton) return
+
+            val popupView = layoutInflater.inflate(R.layout.copy_popup, null)
+            val popup = PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true).apply {
+                setBackgroundDrawable(getDrawable(android.R.color.transparent))
+                isOutsideTouchable = true
+                isFocusable = true
+                elevation = 12f
+            }
+            currentSelectionPopup = popup
+
+            val copyBtn = popupView.findViewById<TextView>(R.id.popup_copy)
+            val cutBtn = popupView.findViewById<TextView>(R.id.popup_cut)
+            val deleteBtn = popupView.findViewById<TextView>(R.id.popup_delete)
+            val cancelBtn = popupView.findViewById<TextView>(R.id.popup_cancel)
+            val shrinkLeftBtn = popupView.findViewById<TextView>(R.id.popup_shrink_left)
+            val expandRightBtn = popupView.findViewById<TextView>(R.id.popup_expand_right)
+
+            copyBtn.setOnClickListener {
+                internalClipboard.copy(text)
+                Toast.makeText(this@MainActivity, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
+                popup.dismiss()
+                currentSelectionPopup = null
+                webView.evaluateJavascript("window.getSelection().removeAllRanges(); if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();", null)
+            }
+
+            cutBtn.setOnClickListener {
+                internalClipboard.copy(text)
+                webView.evaluateJavascript("""
+                    (function() {
+                        var sel = window.getSelection();
+                        if (sel.rangeCount > 0) {
+                            sel.getRangeAt(0).deleteContents();
+                        }
+                        if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();
+                    })();
+                """.trimIndent(), null)
+                Toast.makeText(this@MainActivity, "Cut to secure clipboard", Toast.LENGTH_SHORT).show()
+                popup.dismiss()
+                currentSelectionPopup = null
+            }
+
+            deleteBtn.setOnClickListener {
+                webView.evaluateJavascript("""
+                    (function() {
+                        var sel = window.getSelection();
+                        if (sel.rangeCount > 0) {
+                            sel.getRangeAt(0).deleteContents();
+                        }
+                        if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();
+                    })();
+                """.trimIndent(), null)
+                Toast.makeText(this@MainActivity, "Deleted", Toast.LENGTH_SHORT).show()
+                popup.dismiss()
+                currentSelectionPopup = null
+            }
+
+            cancelBtn.setOnClickListener {
+                popup.dismiss()
+                currentSelectionPopup = null
+                webView.evaluateJavascript("window.getSelection().removeAllRanges(); if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();", null)
+            }
+
+            shrinkLeftBtn.setOnClickListener {
+                shrinkSelectionLeft()
+            }
+
+            expandRightBtn.setOnClickListener {
+                expandSelectionRight()
+            }
+
+            popup.showAtLocation(webView, Gravity.NO_GRAVITY, x, y - 150)
         }
     }
 
