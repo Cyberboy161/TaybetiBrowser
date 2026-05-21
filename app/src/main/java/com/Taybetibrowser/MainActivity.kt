@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
         updateTabsUI()
     }
 
-    private fun setupWebView() {
+private fun setupWebView() {
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -182,6 +182,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun injectPrivacyScripts() {
         val scripts = StringBuilder()
+
+        if (prefs.darkTheme) {
+            scripts.append("""
+                (function() {
+                    try {
+                        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                            document.documentElement.setAttribute('data-color-scheme', 'dark');
+                        }
+                        var style = document.createElement('style');
+                        style.textContent = 'html { background-color: #0D0D14 !important; } body { background-color: #0D0D14 !important; }';
+                        document.head.appendChild(style);
+                    } catch(e) {}
+                })();
+            """.trimIndent())
+        } else {
+            scripts.append("""
+                (function() {
+                    try {
+                        document.documentElement.setAttribute('data-color-scheme', 'light');
+                        var style = document.createElement('style');
+                        style.textContent = 'html { background-color: #FFFFFF !important; } body { background-color: #FFFFFF !important; }';
+                        document.head.appendChild(style);
+                    } catch(e) {}
+                })();
+            """.trimIndent())
+        }
 
         if (prefs.webrtcBlock) {
             scripts.append(PreferencesManager.WEBRTC_API_SCRIPT)
