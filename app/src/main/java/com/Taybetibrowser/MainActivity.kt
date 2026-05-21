@@ -140,6 +140,7 @@ private fun setupWebView() {
         settings.setSupportMultipleWindows(false)
         webView.isLongClickable = false
         webView.isHapticFeedbackEnabled = false
+        webView.setOnLongClickListener { true }
 
         if (prefs.spoofUserAgent) {
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"
@@ -241,12 +242,15 @@ private fun setupWebView() {
                 var selectionMarker = null;
                 var leftHandle = null;
                 var rightHandle = null;
-                var currentSelectionRange = null;
+                var longPressTimer = null;
+                var longPressX = 0;
+                var longPressY = 0;
+                var hasSelection = false;
 
-                var style = document.createElement('style');
-                style.id = 'taybeti-no-select';
-                style.textContent = '* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; } input, textarea, [contenteditable] { -webkit-user-select: text !important; user-select: text !important; }';
-                document.head.appendChild(style);
+                document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    return false;
+                }, true);
 
                 function findInput(el) {
                     while (el && el.tagName !== 'BODY') {
@@ -278,48 +282,146 @@ private fun setupWebView() {
                         rightHandle.remove();
                         rightHandle = null;
                     }
-                    currentSelectionRange = null;
+                }
+
+                function selectWordAtPoint(x, y) {
+                    var sel = window.getSelection();
+                    sel.removeAllRanges();
+
+                    var el = document.elementFromPoint(x, y);
+                    if (!el) return false;
+
+                    var textNodes = [];
+                    function collectTextNodes(node) {
+                        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+                            textNodes.push(node);
+                        } else {
+                            for (var i = 0; i < node.childNodes.length; i++) {
+                                collectTextNodes(node.childNodes[i]);
+                            }
+                        }
+                    }
+                    collectTextNodes(el);
+
+                    if (textNodes.length === 0) {
+                        var parent = el.parentElement || el.parentNode;
+                        if (parent) collectTextNodes(parent);
+                    }
+
+                    for (var i = 0; i < textNodes.length; i++) {
+                        var node = textNodes[i];
+                        var text = node.textContent;
+                        var range = document.createRange();
+
+                        var rect = node.parentElement ? node.parentElement.getBoundingClientRect() : null;
+                        if (!rect) continue;
+
+                        var relX = x - rect.left;
+                        var charIndex = Math.floor((relX / rect.width) * text.length);
+                        charIndex = Math.max(0, Math.min(text.length - 1, charIndex));
+
+                        var start = charIndex;
+                        var end = charIndex;
+
+                        while (start > 0 && !/[\s\p{P}]/u.test(text[start - 1])) start--;
+                        while (end < text.length && !/[\s\p{P}]/u.test(text[end])) end++;
+
+                        if (start === end && text.length > 0) {
+                            end = text.length;
+                            start = 0;
+                        }
+
+                        if (end > start) {
+                            try {
+                                range.setStart(node, start);
+                                range.setEnd(node, end);
+                                sel.addRange(range);
+                                return sel.toString().length > 0;
+                            } catch(e) {}
+                        }
+                    }
+                    return false;
+                }
+
+                function expandSelectionToParagraph() {
+                    var sel = window.getSelection();
+                    if (sel.rangeCount === 0) return;
+
+                    var range = sel.getRangeAt(0);
+                    var text = range.toString();
+
+                    if (text.length < 50) {
+                        var expandedRange = document.createRange();
+                        expandedRange.setStart(range.startContainer, range.startOffset);
+
+                        var endNode = range.endContainer;
+                        var endOffset = range.endOffset;
+
+                        while (endNode && endNode.nodeType === Node.TEXT_NODE) {
+                            var fullText = endNode.textContent;
+                            var searchStart = endOffset;
+                            var foundEnd = -1;
+
+                            for (var i = searchStart; i < fullText.length; i++) {
+                                if (fullText[i] === '\n' || (i > 0 && fullText[i-1] === '.' && (i+1 >= fullText.length || fullText[i+1] === ' ' || fullText[i+1] === '\n'))) {
+                                    foundEnd = i + 1;
+                                    break;
+                                }
+                            }
+
+                            if (foundEnd > 0) {
+                                expandedRange.setEnd(endNode, foundEnd);
+                                break;
+                            }
+
+                            if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.TEXT_NODE) {
+                                endNode = endNode.nextSibling;
+                                endOffset = 0;
+                            } else {
+                                expandedRange.setEnd(endNode, endNode.textContent.length);
+                                break;
+                            }
+                        }
+
+                        sel.removeAllRanges();
+                        sel.addRange(expandedRange);
+                    }
                 }
 
                 function showSelectionUI() {
                     var selection = window.getSelection();
                     if (!selection || selection.rangeCount === 0) return;
-                    
-                    var selectedText = selection.toString();
+
+                    var selectedText = selection.toString().trim();
                     if (selectedText.length < 1) return;
 
                     removeSelectionUI();
 
                     var range = selection.getRangeAt(0);
-                    currentSelectionRange = {
-                        startContainer: range.startContainer,
-                        startOffset: range.startOffset,
-                        endContainer: range.endContainer,
-                        endOffset: range.endOffset
-                    };
-
                     var rect = range.getBoundingClientRect();
-                    
+
                     if (!rect || rect.width === 0) return;
 
                     selectionMarker = document.createElement('div');
                     selectionMarker.style.cssText = 'position:fixed;pointer-events:none;z-index:999998;' +
                         'left:' + rect.left + 'px;top:' + rect.top + 'px;' +
                         'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
-                        'background:rgba(0,212,170,0.15);border:2px solid #00D4AA;border-radius:4px;';
+                        'background:rgba(0,212,170,0.2);border:2px solid #00D4AA;border-radius:4px;';
                     document.body.appendChild(selectionMarker);
 
                     var leftRect = range.getClientRects()[0];
                     var rightRect = range.getClientRects()[range.getClientRects().length - 1];
-                    
+
                     if (leftRect) {
                         leftHandle = document.createElement('div');
-                        leftHandle.style.cssText = 'position:fixed;z-index:999999;width:24px;height:24px;' +
-                            'left:' + (leftRect.left - 12) + 'px;top:' + (leftRect.top + leftRect.height/2 - 12) + 'px;' +
+                        leftHandle.style.cssText = 'position:fixed;z-index:999999;width:28px;height:28px;' +
+                            'left:' + (leftRect.left - 14) + 'px;top:' + (leftRect.top + leftRect.height/2 - 14) + 'px;' +
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                            'color:#000;font-size:12px;font-weight:bold;cursor:pointer;';
+                            'color:#000;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         leftHandle.innerHTML = '◀';
-                        leftHandle.onclick = function() {
+                        leftHandle.ontouchstart = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
                             window.$jsInterfaceName.shrinkSelectionLeft();
                         };
                         document.body.appendChild(leftHandle);
@@ -327,12 +429,14 @@ private fun setupWebView() {
 
                     if (rightRect) {
                         rightHandle = document.createElement('div');
-                        rightHandle.style.cssText = 'position:fixed;z-index:999999;width:24px;height:24px;' +
-                            'left:' + (rightRect.right - 12) + 'px;top:' + (rightRect.top + rightRect.height/2 - 12) + 'px;' +
+                        rightHandle.style.cssText = 'position:fixed;z-index:999999;width:28px;height:28px;' +
+                            'left:' + (rightRect.right - 14) + 'px;top:' + (rightRect.top + rightRect.height/2 - 14) + 'px;' +
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                            'color:#000;font-size:12px;font-weight:bold;cursor:pointer;';
+                            'color:#000;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         rightHandle.innerHTML = '▶';
-                        rightHandle.onclick = function() {
+                        rightHandle.ontouchstart = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
                             window.$jsInterfaceName.expandSelectionRight();
                         };
                         document.body.appendChild(rightHandle);
@@ -344,48 +448,54 @@ private fun setupWebView() {
                     window.$jsInterfaceName.showSelectionPopup(selectedText, centerX, popupY);
                 }
 
-                function restoreSelection() {
-                    if (currentSelectionRange) {
-                        try {
-                            var sel = window.getSelection();
-                            var range = document.createRange();
-                            range.setStart(currentSelectionRange.startContainer, currentSelectionRange.startOffset);
-                            range.setEnd(currentSelectionRange.endContainer, currentSelectionRange.endOffset);
-                            sel.removeAllRanges();
-                            sel.addRange(range);
-                        } catch(e) {}
-                    }
-                }
-
                 document.addEventListener('click', function(e) {
                     var input = findInput(e.target);
                     if (input && input.id) {
                         window.$jsInterfaceName.requestInputFocus(input.id);
                     }
+                    removeSelectionUI();
+                    window.getSelection().removeAllRanges();
                 }, true);
 
                 document.addEventListener('touchstart', function(e) {
                     var input = findInput(e.target);
                     if (input) {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
                         e.preventDefault();
                         var id = input.id || 'inp_' + Math.random().toString(36).substr(2, 9);
                         if (!input.id) input.id = id;
                         window.$jsInterfaceName.requestInputFocus(id);
+                        return;
                     }
+
+                    hasSelection = false;
+                    longPressX = e.touches[0].clientX;
+                    longPressY = e.touches[0].clientY;
+
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                    }
+
+                    longPressTimer = setTimeout(function() {
+                        var result = selectWordAtPoint(longPressX, longPressY);
+                        if (result) {
+                            hasSelection = true;
+                            expandSelectionToParagraph();
+                            setTimeout(function() {
+                                showSelectionUI();
+                            }, 100);
+                        }
+                    }, 400);
                 }, {passive: false});
 
-                var longPressTimer = null;
-                var longPressTarget = null;
-                
-                document.addEventListener('touchstart', function(e) {
-                    if (findInput(e.target)) return;
-                    longPressTarget = e.target;
-                    longPressTimer = setTimeout(function() {
-                        var sel = window.getSelection();
-                        if (sel && sel.toString().length > 0) {
-                            showSelectionUI();
-                        }
-                    }, 500);
+                document.addEventListener('touchmove', function(e) {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
                 }, {passive: true});
 
                 document.addEventListener('touchend', function(e) {
@@ -393,18 +503,19 @@ private fun setupWebView() {
                         clearTimeout(longPressTimer);
                         longPressTimer = null;
                     }
-                    var now = Date.now();
+
                     setTimeout(function() {
                         var selection = window.getSelection();
-                        if (selection && selection.toString().length > 0) {
+                        if (selection && selection.toString().trim().length > 0 && !hasSelection) {
                             showSelectionUI();
-                        } else {
+                        } else if (!hasSelection) {
                             removeSelectionUI();
                         }
-                    }, 200);
-                });
+                        hasSelection = false;
+                    }, 300);
+                }, {passive: true});
 
-                document.addEventListener('touchmove', function() {
+                document.addEventListener('touchcancel', function() {
                     if (longPressTimer) {
                         clearTimeout(longPressTimer);
                         longPressTimer = null;
@@ -412,16 +523,15 @@ private fun setupWebView() {
                 }, {passive: true});
 
                 var selectionTimeout = null;
-                document.addEventListener('selectionchange', function(e) {
+                document.addEventListener('selectionchange', function() {
                     if (selectionTimeout) clearTimeout(selectionTimeout);
                     selectionTimeout = setTimeout(function() {
                         var selection = window.getSelection();
-                        if (selection && selection.toString().length > 0) {
-                            showSelectionUI();
-                        } else {
+                        if (selection && selection.toString().trim().length > 0 && hasSelection) {
                             removeSelectionUI();
+                            showSelectionUI();
                         }
-                    }, 150);
+                    }, 100);
                 });
             })();
         """.trimIndent(), null)
