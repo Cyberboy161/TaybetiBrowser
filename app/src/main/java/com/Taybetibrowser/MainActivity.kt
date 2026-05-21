@@ -137,6 +137,9 @@ private fun setupWebView() {
         settings.domStorageEnabled = true
         settings.loadWithOverviewMode = true
         settings.useWideViewPort = true
+        settings.setSupportMultipleWindows(false)
+        webView.isLongClickable = false
+        webView.isHapticFeedbackEnabled = false
 
         if (prefs.spoofUserAgent) {
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"
@@ -231,8 +234,19 @@ private fun setupWebView() {
     private fun injectKeyboardHandler() {
         webView.evaluateJavascript("""
             (function() {
+                if (window.__taybetiSelectionInstalled) return;
+                window.__taybetiSelectionInstalled = true;
+
                 var selectionPopup = null;
                 var selectionMarker = null;
+                var leftHandle = null;
+                var rightHandle = null;
+                var currentSelectionRange = null;
+
+                var style = document.createElement('style');
+                style.id = 'taybeti-no-select';
+                style.textContent = '* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; } input, textarea, [contenteditable] { -webkit-user-select: text !important; user-select: text !important; }';
+                document.head.appendChild(style);
 
                 function findInput(el) {
                     while (el && el.tagName !== 'BODY') {
@@ -247,15 +261,6 @@ private fun setupWebView() {
                     return null;
                 }
 
-                function isSelectableText(el) {
-                    if (!el) return false;
-                    var style = window.getComputedStyle(el);
-                    var isInput = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
-                    var isEditable = el.isContentEditable === 'true';
-                    var userSelect = style.userSelect !== 'none' && style.userSelect !== 'text';
-                    return (isInput || isEditable || el.tagName === 'BODY') && userSelect;
-                }
-
                 function removeSelectionUI() {
                     if (selectionPopup) {
                         selectionPopup.remove();
@@ -265,6 +270,15 @@ private fun setupWebView() {
                         selectionMarker.remove();
                         selectionMarker = null;
                     }
+                    if (leftHandle) {
+                        leftHandle.remove();
+                        leftHandle = null;
+                    }
+                    if (rightHandle) {
+                        rightHandle.remove();
+                        rightHandle = null;
+                    }
+                    currentSelectionRange = null;
                 }
 
                 function showSelectionUI() {
@@ -277,21 +291,70 @@ private fun setupWebView() {
                     removeSelectionUI();
 
                     var range = selection.getRangeAt(0);
+                    currentSelectionRange = {
+                        startContainer: range.startContainer,
+                        startOffset: range.startOffset,
+                        endContainer: range.endContainer,
+                        endOffset: range.endOffset
+                    };
+
                     var rect = range.getBoundingClientRect();
                     
                     if (!rect || rect.width === 0) return;
 
                     selectionMarker = document.createElement('div');
-                    selectionMarker.style.cssText = 'position:fixed;pointer-events:none;z-index:999999;' +
+                    selectionMarker.style.cssText = 'position:fixed;pointer-events:none;z-index:999998;' +
                         'left:' + rect.left + 'px;top:' + rect.top + 'px;' +
                         'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
-                        'border:2px solid #00D4AA;border-radius:4px;';
+                        'background:rgba(0,212,170,0.15);border:2px solid #00D4AA;border-radius:4px;';
                     document.body.appendChild(selectionMarker);
+
+                    var leftRect = range.getClientRects()[0];
+                    var rightRect = range.getClientRects()[range.getClientRects().length - 1];
+                    
+                    if (leftRect) {
+                        leftHandle = document.createElement('div');
+                        leftHandle.style.cssText = 'position:fixed;z-index:999999;width:24px;height:24px;' +
+                            'left:' + (leftRect.left - 12) + 'px;top:' + (leftRect.top + leftRect.height/2 - 12) + 'px;' +
+                            'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+                            'color:#000;font-size:12px;font-weight:bold;cursor:pointer;';
+                        leftHandle.innerHTML = '◀';
+                        leftHandle.onclick = function() {
+                            window.$jsInterfaceName.shrinkSelectionLeft();
+                        };
+                        document.body.appendChild(leftHandle);
+                    }
+
+                    if (rightRect) {
+                        rightHandle = document.createElement('div');
+                        rightHandle.style.cssText = 'position:fixed;z-index:999999;width:24px;height:24px;' +
+                            'left:' + (rightRect.right - 12) + 'px;top:' + (rightRect.top + rightRect.height/2 - 12) + 'px;' +
+                            'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+                            'color:#000;font-size:12px;font-weight:bold;cursor:pointer;';
+                        rightHandle.innerHTML = '▶';
+                        rightHandle.onclick = function() {
+                            window.$jsInterfaceName.expandSelectionRight();
+                        };
+                        document.body.appendChild(rightHandle);
+                    }
 
                     var centerX = Math.round(rect.left + rect.width / 2);
                     var popupY = Math.round(rect.top - 10);
 
                     window.$jsInterfaceName.showSelectionPopup(selectedText, centerX, popupY);
+                }
+
+                function restoreSelection() {
+                    if (currentSelectionRange) {
+                        try {
+                            var sel = window.getSelection();
+                            var range = document.createRange();
+                            range.setStart(currentSelectionRange.startContainer, currentSelectionRange.startOffset);
+                            range.setEnd(currentSelectionRange.endContainer, currentSelectionRange.endOffset);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        } catch(e) {}
+                    }
                 }
 
                 document.addEventListener('click', function(e) {
@@ -311,6 +374,43 @@ private fun setupWebView() {
                     }
                 }, {passive: false});
 
+                var longPressTimer = null;
+                var longPressTarget = null;
+                
+                document.addEventListener('touchstart', function(e) {
+                    if (findInput(e.target)) return;
+                    longPressTarget = e.target;
+                    longPressTimer = setTimeout(function() {
+                        var sel = window.getSelection();
+                        if (sel && sel.toString().length > 0) {
+                            showSelectionUI();
+                        }
+                    }, 500);
+                }, {passive: true});
+
+                document.addEventListener('touchend', function(e) {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                    var now = Date.now();
+                    setTimeout(function() {
+                        var selection = window.getSelection();
+                        if (selection && selection.toString().length > 0) {
+                            showSelectionUI();
+                        } else {
+                            removeSelectionUI();
+                        }
+                    }, 200);
+                });
+
+                document.addEventListener('touchmove', function() {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                }, {passive: true});
+
                 var selectionTimeout = null;
                 document.addEventListener('selectionchange', function(e) {
                     if (selectionTimeout) clearTimeout(selectionTimeout);
@@ -322,20 +422,6 @@ private fun setupWebView() {
                             removeSelectionUI();
                         }
                     }, 150);
-                });
-
-                var lastTouchEnd = 0;
-                document.addEventListener('touchend', function(e) {
-                    var now = Date.now();
-                    if (now - lastTouchEnd > 300) {
-                        setTimeout(function() {
-                            var selection = window.getSelection();
-                            if (selection && selection.toString().length > 0) {
-                                showSelectionUI();
-                            }
-                        }, 200);
-                    }
-                    lastTouchEnd = now;
                 });
             })();
         """.trimIndent(), null)
@@ -829,30 +915,77 @@ private fun setupWebView() {
         }
 
         @JavascriptInterface
+        fun shrinkSelectionLeft() {
+            runOnUiThread {
+                webView.evaluateJavascript("""
+                    (function() {
+                        try {
+                            var sel = window.getSelection();
+                            if (sel.rangeCount > 0) {
+                                var range = sel.getRangeAt(0);
+                                if (range.endOffset - range.startOffset > 1) {
+                                    range.setStart(range.startContainer, range.startOffset + 1);
+                                } else if (range.startContainer.previousSibling) {
+                                    range.setStart(range.startContainer.previousSibling, 0);
+                                }
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }
+                        } catch(e) {}
+                    })();
+                """.trimIndent(), null)
+            }
+        }
+
+        @JavascriptInterface
+        fun expandSelectionRight() {
+            runOnUiThread {
+                webView.evaluateJavascript("""
+                    (function() {
+                        try {
+                            var sel = window.getSelection();
+                            if (sel.rangeCount > 0) {
+                                var range = sel.getRangeAt(0);
+                                var endNode = range.endContainer;
+                                if (endNode.nodeType === Node.TEXT_NODE && range.endOffset < endNode.length) {
+                                    range.setEnd(endNode, range.endOffset + 1);
+                                } else if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.TEXT_NODE) {
+                                    range.setEnd(endNode.nextSibling, 1);
+                                }
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }
+                        } catch(e) {}
+                    })();
+                """.trimIndent(), null)
+            }
+        }
+
+        @JavascriptInterface
         fun showSelectionPopup(text: String, x: Int, y: Int) {
             runOnUiThread {
                 if (!prefs.copyButton) return@runOnUiThread
 
-                val popup = PopupWindow(this@MainActivity).apply {
-                    contentView = layoutInflater.inflate(R.layout.copy_popup, null)
-                    width = LinearLayout.LayoutParams.WRAP_CONTENT
-                    height = LinearLayout.LayoutParams.WRAP_CONTENT
+                val popupView = layoutInflater.inflate(R.layout.copy_popup, null)
+                val popup = PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true).apply {
                     setBackgroundDrawable(getDrawable(android.R.color.transparent))
                     isOutsideTouchable = true
                     isFocusable = true
                     elevation = 12f
                 }
 
-                val copyBtn = popup.contentView.findViewById<TextView>(R.id.popup_copy)
-                val cutBtn = popup.contentView.findViewById<TextView>(R.id.popup_cut)
-                val deleteBtn = popup.contentView.findViewById<TextView>(R.id.popup_delete)
-                val cancelBtn = popup.contentView.findViewById<TextView>(R.id.popup_cancel)
+                val copyBtn = popupView.findViewById<TextView>(R.id.popup_copy)
+                val cutBtn = popupView.findViewById<TextView>(R.id.popup_cut)
+                val deleteBtn = popupView.findViewById<TextView>(R.id.popup_delete)
+                val cancelBtn = popupView.findViewById<TextView>(R.id.popup_cancel)
+                val shrinkLeftBtn = popupView.findViewById<TextView>(R.id.popup_shrink_left)
+                val expandRightBtn = popupView.findViewById<TextView>(R.id.popup_expand_right)
 
                 copyBtn.setOnClickListener {
                     internalClipboard.copy(text)
                     Toast.makeText(this@MainActivity, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
                     popup.dismiss()
-                    webView.clearSelection()
+                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
                 }
 
                 cutBtn.setOnClickListener {
@@ -868,6 +1001,7 @@ private fun setupWebView() {
                     """.trimIndent(), null)
                     Toast.makeText(this@MainActivity, "Cut to secure clipboard", Toast.LENGTH_SHORT).show()
                     popup.dismiss()
+                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
                 }
 
                 deleteBtn.setOnClickListener {
@@ -882,14 +1016,20 @@ private fun setupWebView() {
                     """.trimIndent(), null)
                     Toast.makeText(this@MainActivity, "Deleted", Toast.LENGTH_SHORT).show()
                     popup.dismiss()
+                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
                 }
 
                 cancelBtn.setOnClickListener {
                     popup.dismiss()
+                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
                 }
 
-                popup.setOnDismissListener {
-                    webView.clearSelection()
+                shrinkLeftBtn.setOnClickListener {
+                    shrinkSelectionLeft()
+                }
+
+                expandRightBtn.setOnClickListener {
+                    expandSelectionRight()
                 }
 
                 popup.showAtLocation(webView, Gravity.NO_GRAVITY, x, y - 150)
@@ -1049,9 +1189,11 @@ private fun setupWebView() {
             marginStart = (2 * resources.displayMetrics.density).toInt()
             marginEnd = (2 * resources.displayMetrics.density).toInt()
         }
+        val outValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)
         val plusBtn = ImageButton(this).apply {
             id = R.id.btn_new_tab
-            setBackgroundResource(android.R.attr.selectableItemBackgroundBorderless)
+            setBackgroundResource(outValue.resourceId)
             setImageDrawable(getDrawable(android.R.drawable.ic_input_add))
             setColorFilter(getColor(R.color.accent))
             contentDescription = "New tab"

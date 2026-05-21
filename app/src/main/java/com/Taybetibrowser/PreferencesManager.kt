@@ -65,7 +65,7 @@ class PreferencesManager(context: Context) {
         set(value) = prefs.edit().putBoolean("haptic_feedback", value).apply()
 
     var pasteButton: Boolean
-        get() = prefs.getBoolean("paste_button", false)
+        get() = prefs.getBoolean("paste_button", true)
         set(value) = prefs.edit().putBoolean("paste_button", value).apply()
 
     var copyButton: Boolean
