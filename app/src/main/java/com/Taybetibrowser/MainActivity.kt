@@ -37,8 +37,6 @@ class NoSystemKeyboardWebView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : WebView(context, attrs, defStyleAttr) {
 
-    private var actionModeCallback: ActionMode.Callback? = null
-
     override fun onCreateInputConnection(editorInfo: EditorInfo): android.view.inputmethod.InputConnection? {
         return null
     }
@@ -46,24 +44,14 @@ class NoSystemKeyboardWebView @JvmOverloads constructor(
     override fun onCheckIsTextEditor(): Boolean = true
 
     override fun startActionMode(callback: ActionMode.Callback): ActionMode? {
-        actionModeCallback = callback
-        return super.startActionMode(object : ActionMode.Callback {
-            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                actionModeCallback?.onActionItemClicked(mode, item)
-                return true
-            }
-            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                menu?.clear()
-                return false
-            }
-            override fun onDestroyActionMode(mode: ActionMode?) {
-                actionModeCallback?.onDestroyActionMode(mode)
-            }
-            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                menu?.clear()
-                return false
-            }
-        })
+        return null
+    }
+
+    override fun startActionModeForChild(
+        originalView: View?,
+        callback: ActionMode.Callback?
+    ): ActionMode? {
+        return null
     }
 
     fun clearSelection() {
@@ -243,6 +231,9 @@ private fun setupWebView() {
     private fun injectKeyboardHandler() {
         webView.evaluateJavascript("""
             (function() {
+                var selectionPopup = null;
+                var selectionMarker = null;
+
                 function findInput(el) {
                     while (el && el.tagName !== 'BODY') {
                         if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && !el.readOnly && el.type !== 'hidden') {
@@ -265,6 +256,44 @@ private fun setupWebView() {
                     return (isInput || isEditable || el.tagName === 'BODY') && userSelect;
                 }
 
+                function removeSelectionUI() {
+                    if (selectionPopup) {
+                        selectionPopup.remove();
+                        selectionPopup = null;
+                    }
+                    if (selectionMarker) {
+                        selectionMarker.remove();
+                        selectionMarker = null;
+                    }
+                }
+
+                function showSelectionUI() {
+                    var selection = window.getSelection();
+                    if (!selection || selection.rangeCount === 0) return;
+                    
+                    var selectedText = selection.toString();
+                    if (selectedText.length < 1) return;
+
+                    removeSelectionUI();
+
+                    var range = selection.getRangeAt(0);
+                    var rect = range.getBoundingClientRect();
+                    
+                    if (!rect || rect.width === 0) return;
+
+                    selectionMarker = document.createElement('div');
+                    selectionMarker.style.cssText = 'position:fixed;pointer-events:none;z-index:999999;' +
+                        'left:' + rect.left + 'px;top:' + rect.top + 'px;' +
+                        'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
+                        'border:2px solid #00D4AA;border-radius:4px;';
+                    document.body.appendChild(selectionMarker);
+
+                    var centerX = Math.round(rect.left + rect.width / 2);
+                    var popupY = Math.round(rect.top - 10);
+
+                    window.$jsInterfaceName.showSelectionPopup(selectedText, centerX, popupY);
+                }
+
                 document.addEventListener('click', function(e) {
                     var input = findInput(e.target);
                     if (input && input.id) {
@@ -282,14 +311,17 @@ private fun setupWebView() {
                     }
                 }, {passive: false});
 
+                var selectionTimeout = null;
                 document.addEventListener('selectionchange', function(e) {
-                    var selection = window.getSelection();
-                    if (selection && selection.toString().length > 3) {
-                        var selectedText = selection.toString();
-                        if (selectedText.length > 0) {
-                            window.$jsInterfaceName.onTextSelected(selectedText);
+                    if (selectionTimeout) clearTimeout(selectionTimeout);
+                    selectionTimeout = setTimeout(function() {
+                        var selection = window.getSelection();
+                        if (selection && selection.toString().length > 0) {
+                            showSelectionUI();
+                        } else {
+                            removeSelectionUI();
                         }
-                    }
+                    }, 150);
                 });
 
                 var lastTouchEnd = 0;
@@ -298,13 +330,10 @@ private fun setupWebView() {
                     if (now - lastTouchEnd > 300) {
                         setTimeout(function() {
                             var selection = window.getSelection();
-                            if (selection && selection.toString().length > 3) {
-                                var selectedText = selection.toString();
-                                if (selectedText.length > 0) {
-                                    window.$jsInterfaceName.showCopyPopup(selection.toString());
-                                }
+                            if (selection && selection.toString().length > 0) {
+                                showSelectionUI();
                             }
-                        }, 300);
+                        }, 200);
                     }
                     lastTouchEnd = now;
                 });
@@ -800,7 +829,7 @@ private fun setupWebView() {
         }
 
         @JavascriptInterface
-        fun showCopyPopup(text: String) {
+        fun showSelectionPopup(text: String, x: Int, y: Int) {
             runOnUiThread {
                 if (!prefs.copyButton) return@runOnUiThread
 
@@ -810,15 +839,48 @@ private fun setupWebView() {
                     height = LinearLayout.LayoutParams.WRAP_CONTENT
                     setBackgroundDrawable(getDrawable(android.R.color.transparent))
                     isOutsideTouchable = true
-                    elevation = 8f
+                    isFocusable = true
+                    elevation = 12f
                 }
 
                 val copyBtn = popup.contentView.findViewById<TextView>(R.id.popup_copy)
+                val cutBtn = popup.contentView.findViewById<TextView>(R.id.popup_cut)
+                val deleteBtn = popup.contentView.findViewById<TextView>(R.id.popup_delete)
                 val cancelBtn = popup.contentView.findViewById<TextView>(R.id.popup_cancel)
 
                 copyBtn.setOnClickListener {
                     internalClipboard.copy(text)
                     Toast.makeText(this@MainActivity, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
+                    popup.dismiss()
+                    webView.clearSelection()
+                }
+
+                cutBtn.setOnClickListener {
+                    internalClipboard.copy(text)
+                    webView.evaluateJavascript("""
+                        (function() {
+                            var sel = window.getSelection();
+                            if (sel.rangeCount > 0) {
+                                var range = sel.getRangeAt(0);
+                                range.deleteContents();
+                            }
+                        })();
+                    """.trimIndent(), null)
+                    Toast.makeText(this@MainActivity, "Cut to secure clipboard", Toast.LENGTH_SHORT).show()
+                    popup.dismiss()
+                }
+
+                deleteBtn.setOnClickListener {
+                    webView.evaluateJavascript("""
+                        (function() {
+                            var sel = window.getSelection();
+                            if (sel.rangeCount > 0) {
+                                var range = sel.getRangeAt(0);
+                                range.deleteContents();
+                            }
+                        })();
+                    """.trimIndent(), null)
+                    Toast.makeText(this@MainActivity, "Deleted", Toast.LENGTH_SHORT).show()
                     popup.dismiss()
                 }
 
@@ -827,13 +889,10 @@ private fun setupWebView() {
                 }
 
                 popup.setOnDismissListener {
-                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
+                    webView.clearSelection()
                 }
 
-                val location = IntArray(2)
-                webView.getLocationOnScreen(location)
-
-                popup.showAtLocation(webView, Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, location[1] + 200)
+                popup.showAtLocation(webView, Gravity.NO_GRAVITY, x, y - 150)
             }
         }
     }

@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:background="@drawable/copy_popup_background"
-    android:padding="12dp"
+    android:padding="8dp"
     android:gravity="center_vertical">
 
     <TextView
@@ -14,8 +14,42 @@
         android:text="Copy"
         android:textSize="14sp"
         android:textColor="@color/accent"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:background="?attr/selectableItemBackground"/>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="20dp"
+        android:background="@color/divider"
+        android:layout_marginHorizontal="4dp"/>
+
+    <TextView
+        android:id="@+id/popup_cut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cut"
+        android:textSize="14sp"
+        android:textColor="@color/accent"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:background="?attr/selectableItemBackground"/>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="20dp"
+        android:background="@color/divider"
+        android:layout_marginHorizontal="4dp"/>
+
+    <TextView
+        android:id="@+id/popup_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Delete"
+        android:textSize="14sp"
+        android:textColor="@color/insecure"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
         android:background="?attr/selectableItemBackground"/>
 
     <View
@@ -31,8 +65,8 @@
         android:text="Cancel"
         android:textSize="14sp"
         android:textColor="@color/text_secondary"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
         android:background="?attr/selectableItemBackground"/>
 
 </LinearLayout>

@@ -69,7 +69,7 @@ class PreferencesManager(context: Context) {
         set(value) = prefs.edit().putBoolean("paste_button", value).apply()
 
     var copyButton: Boolean
-        get() = prefs.getBoolean("copy_button", false)
+        get() = prefs.getBoolean("copy_button", true)
         set(value) = prefs.edit().putBoolean("copy_button", value).apply()
 
     var clearOnExit: Boolean
