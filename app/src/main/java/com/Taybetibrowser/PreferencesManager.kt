@@ -161,6 +161,110 @@ class PreferencesManager(context: Context) {
             })();
         """
 
+        const val ADBLOCK_SCRIPT = """
+            (function() {
+                const adPatterns = [
+                    /ads\.google\.com/,
+                    /googlesyndication\.com/,
+                    /googleadservices\.com/,
+                    /doubleclick\.net/,
+                    /adservice\.google\.com/,
+                    /pagead2\.googlesyndication\.com/,
+                    /bannerfarm\.advertising\.com/,
+                    /ad\.doubleclick\.net/,
+                    /static\.advertising\.com/,
+                    /beacon\.advertising\.com/,
+                    /pixel\.advertising\.com/,
+                    /ad\.bot/,
+                    /ads\.yahoo\.com/,
+                    /advertising\.com/,
+                    /outbrain\.com/,
+                    /taboola\.com/,
+                    /criteo\.com/,
+                    /amazon-adsystem\.com/,
+                    /facebook\.com\/tr/,
+                    /connect\.facebook\.net\/.*\/fbevents\.js/,
+                    /analytics\.tiktok\.com/
+                ];
+
+                const blockList = [
+                    'ad-',
+                    'ads-',
+                    'advert',
+                    'sponsor',
+                    'banner',
+                    'popup-ad',
+                    'dfp-',
+                    'adsbygoogle',
+                    'google-ad',
+                    'ad-container',
+                    'ad-wrapper',
+                    'ad-slot',
+                    'ad-unit',
+                    'adsense',
+                    'dfp-ad',
+                    'pub-ad',
+                    'gpt-ad',
+                    'sas-ad',
+                    'taboola-',
+                    'outbrain-',
+                    'criteo-',
+                    'amazon-ads'
+                ];
+
+                const style = document.createElement('style');
+                style.textContent = `
+                    [class*="ads-"], [class*="ads_"],
+                    [class*="advert"], [class*="sponsor"],
+                    [id*="ads-"], [id*="ads_"],
+                    [id*="advert"], [id*="sponsor"],
+                    .adsbygoogle, .sponsored,
+                    .advertisement, .ad-container,
+                    .ad-wrapper, .ad-slot,
+                    iframe[src*="doubleclick"],
+                    iframe[src*="googlesyndication"],
+                    [id^="google_ads"],
+                    .banner-farm,
+                    .ad-break, .ad-break-label
+                    { display: none !important; visibility: hidden !important; }
+                `;
+                document.head.appendChild(style);
+
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                const tag = node.tagName?.toLowerCase();
+                                const src = node.src || node.getAttribute('src') || '';
+                                const href = node.href || node.getAttribute('href') || '';
+                                const id = node.id || '';
+                                const className = node.className || '';
+                                const style = node.getAttribute('style') || '';
+
+                                adPatterns.forEach(function(pattern) {
+                                    if (pattern.test(src) || pattern.test(href)) {
+                                        node.style.setProperty('display', 'none', 'important');
+                                        node.style.setProperty('visibility', 'hidden', 'important');
+                                    }
+                                });
+
+                                blockList.forEach(function(keyword) {
+                                    if (id.toLowerCase().includes(keyword) ||
+                                        className.toString().toLowerCase().includes(keyword) ||
+                                        style.toLowerCase().includes('display:inline') && style.toLowerCase().includes('width:') && style.toLowerCase().includes('height:')) {
+                                        node.style.setProperty('display', 'none', 'important');
+                                        node.style.setProperty('visibility', 'hidden', 'important');
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+            })();
+        """
+
         fun getAntiFingerprintScripts(prefs: PreferencesManager): String {
             val scripts = StringBuilder()
             scripts.append("if (window.RTCPeerConnection || window.webkitRTCPeerConnection) { ${WEBRTC_API_SCRIPT} }")
@@ -168,5 +272,7 @@ class PreferencesManager(context: Context) {
             scripts.append(REFERRER_POLICY_SCRIPT)
             return scripts.toString()
         }
+
+        fun getAdBlockScript(): String = ADBLOCK_SCRIPT
     }
 }

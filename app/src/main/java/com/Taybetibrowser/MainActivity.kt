@@ -3,8 +3,11 @@ package com.Taybetibrowser
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
+import android.view.ActionMode
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
@@ -13,6 +16,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.JavascriptInterface
+import android.widget.Button
 import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.ImageButton
@@ -33,11 +37,38 @@ class NoSystemKeyboardWebView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : WebView(context, attrs, defStyleAttr) {
 
+    private var actionModeCallback: ActionMode.Callback? = null
+
     override fun onCreateInputConnection(editorInfo: EditorInfo): android.view.inputmethod.InputConnection? {
         return null
     }
 
     override fun onCheckIsTextEditor(): Boolean = true
+
+    override fun startActionMode(callback: ActionMode.Callback): ActionMode? {
+        actionModeCallback = callback
+        return super.startActionMode(object : ActionMode.Callback {
+            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
+                actionModeCallback?.onActionItemClicked(mode, item)
+                return true
+            }
+            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                menu?.clear()
+                return false
+            }
+            override fun onDestroyActionMode(mode: ActionMode?) {
+                actionModeCallback?.onDestroyActionMode(mode)
+            }
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                menu?.clear()
+                return false
+            }
+        })
+    }
+
+    fun clearSelection() {
+        evaluateJavascript("window.getSelection().removeAllRanges();", null)
+    }
 }
 
 class MainActivity : AppCompatActivity() {
@@ -95,17 +126,21 @@ class MainActivity : AppCompatActivity() {
         secureKeyboard.setKeyRandomization(prefs.keyRandomization)
         secureKeyboard.setPasteEnabled(prefs.pasteButton)
         secureKeyboard.setCopyEnabled(prefs.copyButton)
+        secureKeyboard.setDarkTheme(prefs.darkTheme)
 
         jsInterfaceName = if (prefs.stealthMode) "_ak${(Math.random() * 1000).toInt()}" else "AndroidKeyboard"
+
+        if (tabs.isEmpty()) {
+            tabs.add(Tab(0, "https://duckduckgo.com", "DuckDuckGo"))
+            currentTabId = 0
+        }
 
         setupWebView()
         setupUrlBar()
         setupButtons()
         setupMenu()
         applyTheme()
-        if (tabs.isEmpty()) {
-            tabs.add(Tab(0, "https://duckduckgo.com", "New Tab"))
-        }
+        updateTabsUI()
     }
 
     private fun setupWebView() {
@@ -125,6 +160,7 @@ class MainActivity : AppCompatActivity() {
                 injectPrivacyScripts()
                 injectKeyboardHandler()
                 checkAndAutoFillPassword(url)
+                updateBookmarkIcon()
                 url?.let {
                     if (!it.startsWith("about:")) {
                         urlBar.setText(it.replace("https://", "").replace("http://", ""))
@@ -163,6 +199,10 @@ class MainActivity : AppCompatActivity() {
             scripts.append(PreferencesManager.STEALTH_SCRIPT)
         }
 
+        if (prefs.adBlockEnabled) {
+            scripts.append(PreferencesManager.getAdBlockScript())
+        }
+
         if (scripts.isNotEmpty()) {
             webView.evaluateJavascript("""
                 (function() {
@@ -190,6 +230,15 @@ class MainActivity : AppCompatActivity() {
                     return null;
                 }
 
+                function isSelectableText(el) {
+                    if (!el) return false;
+                    var style = window.getComputedStyle(el);
+                    var isInput = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
+                    var isEditable = el.isContentEditable === 'true';
+                    var userSelect = style.userSelect !== 'none' && style.userSelect !== 'text';
+                    return (isInput || isEditable || el.tagName === 'BODY') && userSelect;
+                }
+
                 document.addEventListener('click', function(e) {
                     var input = findInput(e.target);
                     if (input && input.id) {
@@ -209,7 +258,7 @@ class MainActivity : AppCompatActivity() {
 
                 document.addEventListener('selectionchange', function(e) {
                     var selection = window.getSelection();
-                    if (selection && selection.toString().length > 0) {
+                    if (selection && selection.toString().length > 3) {
                         var selectedText = selection.toString();
                         if (selectedText.length > 0) {
                             window.$jsInterfaceName.onTextSelected(selectedText);
@@ -217,16 +266,21 @@ class MainActivity : AppCompatActivity() {
                     }
                 });
 
+                var lastTouchEnd = 0;
                 document.addEventListener('touchend', function(e) {
-                    setTimeout(function() {
-                        var selection = window.getSelection();
-                        if (selection && selection.toString().length > 0) {
-                            var selectedText = selection.toString();
-                            if (selectedText.length > 0) {
-                                window.$jsInterfaceName.onTextSelected(selectedText);
+                    var now = Date.now();
+                    if (now - lastTouchEnd > 300) {
+                        setTimeout(function() {
+                            var selection = window.getSelection();
+                            if (selection && selection.toString().length > 3) {
+                                var selectedText = selection.toString();
+                                if (selectedText.length > 0) {
+                                    window.$jsInterfaceName.showCopyPopup(selection.toString());
+                                }
                             }
-                        }
-                    }, 300);
+                        }, 300);
+                    }
+                    lastTouchEnd = now;
                 });
             })();
         """.trimIndent(), null)
@@ -273,9 +327,6 @@ class MainActivity : AppCompatActivity() {
         popup.elevation = 8f
         popup.setBackgroundDrawable(getDrawable(R.color.surface))
 
-        val themeStatus = popupView.findViewById<TextView>(R.id.theme_status)
-        themeStatus.text = if (prefs.darkTheme) "Dark" else "Light"
-
         val tabsCount = popupView.findViewById<TextView>(R.id.tabs_count)
         tabsCount.text = " (${tabs.size})"
 
@@ -301,10 +352,35 @@ class MainActivity : AppCompatActivity() {
             showPasswordsMenu(anchor)
         }
 
-        popupView.findViewById<LinearLayout>(R.id.menu_theme).setOnClickListener {
-            prefs.darkTheme = !prefs.darkTheme
-            popup.dismiss()
-            applyTheme()
+        val toggleDark = popupView.findViewById<TextView>(R.id.toggle_dark)
+        val toggleLight = popupView.findViewById<TextView>(R.id.toggle_light)
+
+        if (prefs.darkTheme) {
+            toggleDark.isSelected = true
+            toggleLight.isSelected = false
+        } else {
+            toggleDark.isSelected = false
+            toggleLight.isSelected = true
+        }
+
+        toggleDark.setOnClickListener {
+            if (!prefs.darkTheme) {
+                prefs.darkTheme = true
+                toggleDark.isSelected = true
+                toggleLight.isSelected = false
+                popup.dismiss()
+                applyTheme()
+            }
+        }
+
+        toggleLight.setOnClickListener {
+            if (prefs.darkTheme) {
+                prefs.darkTheme = false
+                toggleLight.isSelected = true
+                toggleDark.isSelected = false
+                popup.dismiss()
+                applyTheme()
+            }
         }
 
         popupView.findViewById<LinearLayout>(R.id.menu_history).setOnClickListener {
@@ -347,6 +423,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             delegate.localNightMode = androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
         }
+        secureKeyboard.setDarkTheme(prefs.darkTheme)
     }
 
     private fun showBookmarksMenu(anchor: View) {
@@ -695,6 +772,44 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        @JavascriptInterface
+        fun showCopyPopup(text: String) {
+            runOnUiThread {
+                if (!prefs.copyButton) return@runOnUiThread
+
+                val popup = PopupWindow(this@MainActivity).apply {
+                    contentView = layoutInflater.inflate(R.layout.copy_popup, null)
+                    width = LinearLayout.LayoutParams.WRAP_CONTENT
+                    height = LinearLayout.LayoutParams.WRAP_CONTENT
+                    setBackgroundDrawable(getDrawable(android.R.color.transparent))
+                    isOutsideTouchable = true
+                    elevation = 8f
+                }
+
+                val copyBtn = popup.contentView.findViewById<TextView>(R.id.popup_copy)
+                val cancelBtn = popup.contentView.findViewById<TextView>(R.id.popup_cancel)
+
+                copyBtn.setOnClickListener {
+                    internalClipboard.copy(text)
+                    Toast.makeText(this@MainActivity, "Copied to secure clipboard", Toast.LENGTH_SHORT).show()
+                    popup.dismiss()
+                }
+
+                cancelBtn.setOnClickListener {
+                    popup.dismiss()
+                }
+
+                popup.setOnDismissListener {
+                    webView.evaluateJavascript("window.getSelection().removeAllRanges();", null)
+                }
+
+                val location = IntArray(2)
+                webView.getLocationOnScreen(location)
+
+                popup.showAtLocation(webView, Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, location[1] + 200)
+            }
+        }
     }
 
     private fun hideSystemKeyboard() {
@@ -800,6 +915,13 @@ class MainActivity : AppCompatActivity() {
         updateTabsUI()
     }
 
+    private fun updateBookmarkIcon() {
+        val currentUrl = webView.url ?: return
+        val bookmarks = db.getAllBookmarks()
+        val isBookmarked = bookmarks.any { it.url.contains(currentUrl, ignoreCase = true) || currentUrl.contains(it.url, ignoreCase = true) }
+        btnBookmark.setColorFilter(if (isBookmarked) getColor(R.color.accent) else getColor(R.color.text_secondary))
+    }
+
     private fun showBookmarkDialog(title: String, url: String) {
         val editText = EditText(this).apply {
             setText(title)
@@ -823,31 +945,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateTabsUI() {
-        tabsContainer.visibility = if (tabs.size > 1) View.VISIBLE else View.GONE
+        tabsContainer.visibility = View.VISIBLE
 
         for (i in tabsRow.childCount - 1 downTo 1) {
             tabsRow.removeViewAt(i)
         }
 
         for (tab in tabs) {
-            val indicator = android.widget.TextView(this).apply {
-                text = tab.title.take(12).ifEmpty { "Tab" }
-                textSize = 12f
-                setTextColor(getColor(if (tab.id == currentTabId) R.color.accent else R.color.text_secondary))
-                setPadding(16, 8, 16, 8)
+            val tabLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(8, 4, 4, 4)
                 background = if (tab.id == currentTabId) {
                     android.graphics.drawable.GradientDrawable().apply {
                         setColor(getColor(R.color.surface_variant))
                         cornerRadius = 16f
                     }
                 } else null
+
+                val textView = android.widget.TextView(this@MainActivity).apply {
+                    text = tab.title.take(10).ifEmpty { "Tab" }
+                    textSize = 12f
+                    setTextColor(getColor(if (tab.id == currentTabId) R.color.accent else R.color.text_secondary))
+                    setPadding(8, 4, 8, 4)
+                }
+                addView(textView)
+
+                val closeBtn = android.widget.TextView(this@MainActivity).apply {
+                    text = "✕"
+                    textSize = 12f
+                    setTextColor(getColor(R.color.text_hint))
+                    setPadding(8, 4, 8, 4)
+                    setOnClickListener {
+                        closeTab(tab)
+                    }
+                }
+                addView(closeBtn)
+
                 setOnClickListener {
                     currentTabId = tab.id
                     webView.loadUrl(tab.url)
                     updateTabsUI()
                 }
             }
-            tabsRow.addView(indicator)
+            tabsRow.addView(tabLayout)
+        }
+    }
+
+    private fun closeTab(tab: Tab) {
+        val index = tabs.indexOf(tab)
+        if (index != -1) {
+            tabs.removeAt(index)
+            if (tabs.isEmpty()) {
+                tabs.add(Tab(0, "https://duckduckgo.com", "DuckDuckGo"))
+                currentTabId = 0
+                webView.loadUrl("https://duckduckgo.com")
+            } else if (tab.id == currentTabId) {
+                val newIndex = minOf(index, tabs.size - 1)
+                currentTabId = tabs[newIndex].id
+                webView.loadUrl(tabs[newIndex].url)
+            }
+            updateTabsUI()
         }
     }
 

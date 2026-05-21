@@ -37,6 +37,7 @@ class SecureKeyboardView @JvmOverloads constructor(
     private var mode = KeyboardMode.EN
     private var pasteEnabled = false
     private var copyEnabled = false
+    private var isDarkTheme = true
 
     private fun getEnRows(): List<List<String>> {
         val lastRow = if (pasteEnabled || copyEnabled) {
@@ -124,7 +125,7 @@ class SecureKeyboardView @JvmOverloads constructor(
 
     init {
         orientation = VERTICAL
-        setBackgroundColor(context.getColor(R.color.keyboard_background))
+        setBackgroundColor(context.getColor(if (isDarkTheme) R.color.keyboard_background else R.color.keyboard_background_light))
         setupKeyboard()
     }
 
@@ -156,6 +157,11 @@ class SecureKeyboardView @JvmOverloads constructor(
 
     fun setKeyRandomization(enabled: Boolean) {
         keyRandomizationEnabled = enabled
+    }
+
+    fun setDarkTheme(enabled: Boolean) {
+        isDarkTheme = enabled
+        setupKeyboard()
     }
 
     fun setupKeyboard() {
@@ -201,13 +207,25 @@ class SecureKeyboardView @JvmOverloads constructor(
     }
 
     private fun addKey(container: LinearLayout, key: String, weight: Float = 1f) {
-        val normalBg = when (key) {
-            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_normal)
-            else -> context.getDrawable(R.drawable.key_background)
+        val normalBg = when {
+            isDarkTheme -> when (key) {
+                "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_normal)
+                else -> context.getDrawable(R.drawable.key_background)
+            }
+            else -> when (key) {
+                "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_normal_light)
+                else -> context.getDrawable(R.drawable.key_background_light)
+            }
         }
-        val pressedBg = when (key) {
-            "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_pressed)
-            else -> context.getDrawable(R.drawable.key_pressed)
+        val pressedBg = when {
+            isDarkTheme -> when (key) {
+                "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_pressed)
+                else -> context.getDrawable(R.drawable.key_pressed)
+            }
+            else -> when (key) {
+                "space", "Go", "123", "ABC", "EN", "🌐", "⌫", "↵", "⇧", "paste", "copy" -> context.getDrawable(R.drawable.key_special_pressed_light)
+                else -> context.getDrawable(R.drawable.key_pressed_light)
+            }
         }
 
         val button = Button(context).apply {
@@ -228,7 +246,7 @@ class SecureKeyboardView @JvmOverloads constructor(
                 else -> 16f
             }
             background = normalBg
-            setTextColor(context.getColor(R.color.keyboard_key_text))
+            setTextColor(context.getColor(if (isDarkTheme) R.color.keyboard_key_text else R.color.keyboard_key_text_light))
             isAllCaps = false
 
             setOnClickListener {

@@ -294,35 +294,49 @@
         <LinearLayout
             android:id="@+id/menu_theme"
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="50dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/menu_item_background"
             android:paddingHorizontal="12dp"
             android:layout_marginBottom="4dp">
 
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@android:drawable/ic_menu_day"
-                android:layout_marginEnd="14dp"
-                android:tint="@color/text_secondary"/>
-
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Theme"
+                android:text="Dark Mode"
                 android:textSize="15sp"
                 android:textColor="@color/text_primary"/>
 
-            <TextView
-                android:id="@+id/theme_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dark"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary"/>
+            <LinearLayout
+                android:layout_width="90dp"
+                android:layout_height="32dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/toggle_track_background">
+
+                <TextView
+                    android:id="@+id/toggle_dark"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="☾"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:background="@drawable/toggle_selected_background"
+                    android:textColor="@color/text_primary"/>
+
+                <TextView
+                    android:id="@+id/toggle_light"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="☀"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
