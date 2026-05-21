@@ -9,26 +9,20 @@
     <HorizontalScrollView
         android:id="@+id/tabs_container"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
+        android:minHeight="32dp"
         android:background="@color/surface"
         android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/tabs_row"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="32dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="4dp">
-
-            <ImageButton
-                android:id="@+id/btn_new_tab"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="@color/accent"
-                android:contentDescription="New tab" />
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp">
 
             <TextView
                 android:id="@+id/tab_indicator_1"
@@ -37,6 +31,16 @@
                 android:layout_marginHorizontal="6dp"
                 android:background="@drawable/tab_indicator"
                 android:visibility="gone"/>
+
+            <ImageButton
+                android:id="@+id/btn_new_tab"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_input_add"
+                android:tint="@color/accent"
+                android:contentDescription="New tab" />
 
         </LinearLayout>
     </HorizontalScrollView>

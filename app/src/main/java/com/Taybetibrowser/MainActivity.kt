@@ -986,10 +986,6 @@ private fun setupWebView() {
             val currentTitle = webView.title ?: "Bookmark"
             showBookmarkDialog(currentTitle, currentUrl)
         }
-
-        btnNewTab.setOnClickListener {
-            createNewTab()
-        }
     }
 
     private fun createNewTab() {
@@ -1032,7 +1028,19 @@ private fun setupWebView() {
     private fun updateTabsUI() {
         tabsContainer.visibility = View.VISIBLE
 
-        for (i in tabsRow.childCount - 1 downTo 1) {
+        val tabCount = tabs.size
+        val heightDp = when {
+            tabCount <= 2 -> 48
+            tabCount <= 5 -> 40
+            tabCount <= 10 -> 36
+            else -> 32
+        }
+        val heightPx = (heightDp * resources.displayMetrics.density).toInt()
+        val layoutParams = tabsContainer.layoutParams
+        layoutParams.height = heightPx
+        tabsContainer.layoutParams = layoutParams
+
+        for (i in tabsRow.childCount - 1 downTo 0) {
             tabsRow.removeViewAt(i)
         }
 
@@ -1050,7 +1058,7 @@ private fun setupWebView() {
 
                 val textView = android.widget.TextView(this@MainActivity).apply {
                     text = tab.title.take(10).ifEmpty { "Tab" }
-                    textSize = 12f
+                    textSize = if (tabCount <= 2) 13f else if (tabCount <= 5) 12f else 11f
                     setTextColor(getColor(if (tab.id == currentTabId) R.color.accent else R.color.text_secondary))
                     setPadding(8, 4, 8, 4)
                 }
@@ -1058,7 +1066,7 @@ private fun setupWebView() {
 
                 val closeBtn = android.widget.TextView(this@MainActivity).apply {
                     text = "✕"
-                    textSize = 12f
+                    textSize = if (tabCount <= 2) 12f else 10f
                     setTextColor(getColor(R.color.text_hint))
                     setPadding(8, 4, 8, 4)
                     setOnClickListener {
@@ -1075,6 +1083,24 @@ private fun setupWebView() {
             }
             tabsRow.addView(tabLayout)
         }
+
+        val plusBtnSize = (32 * resources.displayMetrics.density).toInt()
+        val plusBtnMargin = (4 * resources.displayMetrics.density).toInt()
+        val plusBtnLayoutParams = LinearLayout.LayoutParams(plusBtnSize, plusBtnSize).apply {
+            marginStart = plusBtnMargin
+        }
+        val plusBtn = ImageButton(this).apply {
+            id = R.id.btn_new_tab
+            setBackgroundResource(android.R.attr.selectableItemBackgroundBorderless)
+            setImageDrawable(getDrawable(android.R.drawable.ic_input_add))
+            setColorFilter(getColor(R.color.accent))
+            contentDescription = "New tab"
+            setOnClickListener {
+                createNewTab()
+            }
+        }
+        plusBtn.layoutParams = plusBtnLayoutParams
+        tabsRow.addView(plusBtn)
     }
 
     private fun closeTab(tab: Tab) {
