@@ -1030,10 +1030,10 @@ private fun setupWebView() {
 
         val tabCount = tabs.size
         val heightDp = when {
-            tabCount <= 2 -> 48
-            tabCount <= 5 -> 40
-            tabCount <= 10 -> 36
-            else -> 32
+            tabCount <= 2 -> 44
+            tabCount <= 5 -> 36
+            tabCount <= 10 -> 32
+            else -> 28
         }
         val heightPx = (heightDp * resources.displayMetrics.density).toInt()
         val layoutParams = tabsContainer.layoutParams
@@ -1044,31 +1044,57 @@ private fun setupWebView() {
             tabsRow.removeViewAt(i)
         }
 
-        for (tab in tabs) {
+        val plusBtnSize = (28 * resources.displayMetrics.density).toInt()
+        val plusBtnLayoutParams = LinearLayout.LayoutParams(plusBtnSize, plusBtnSize).apply {
+            marginStart = (2 * resources.displayMetrics.density).toInt()
+            marginEnd = (2 * resources.displayMetrics.density).toInt()
+        }
+        val plusBtn = ImageButton(this).apply {
+            id = R.id.btn_new_tab
+            setBackgroundResource(android.R.attr.selectableItemBackgroundBorderless)
+            setImageDrawable(getDrawable(android.R.drawable.ic_input_add))
+            setColorFilter(getColor(R.color.accent))
+            contentDescription = "New tab"
+            setOnClickListener {
+                createNewTab()
+            }
+        }
+
+        for ((index, tab) in tabs.withIndex()) {
+            val isFirst = index == 0
+            val tabWidthDp = if (isFirst) {
+                120
+            } else {
+                maxOf(40, 100 - (index * 8))
+            }
+            val tabWidthPx = (tabWidthDp * resources.displayMetrics.density).toInt()
+            val marginPx = (2 * resources.displayMetrics.density).toInt()
+
             val tabLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(8, 4, 4, 4)
+                setPadding(6, 2, 6, 2)
                 background = if (tab.id == currentTabId) {
                     android.graphics.drawable.GradientDrawable().apply {
                         setColor(getColor(R.color.surface_variant))
-                        cornerRadius = 16f
+                        cornerRadius = 12f
                     }
                 } else null
 
                 val textView = android.widget.TextView(this@MainActivity).apply {
                     text = tab.title.take(10).ifEmpty { "Tab" }
-                    textSize = if (tabCount <= 2) 13f else if (tabCount <= 5) 12f else 11f
+                    textSize = if (isFirst) 14f else maxOf(9f, 13f - (index * 0.8f))
                     setTextColor(getColor(if (tab.id == currentTabId) R.color.accent else R.color.text_secondary))
-                    setPadding(8, 4, 8, 4)
+                    maxLines = 1
+                    ellipsize = android.text.TextUtils.TruncateAt.END
                 }
-                addView(textView)
+                addView(textView, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
                 val closeBtn = android.widget.TextView(this@MainActivity).apply {
                     text = "✕"
-                    textSize = if (tabCount <= 2) 12f else 10f
+                    textSize = if (isFirst) 12f else maxOf(8f, 11f - (index * 0.6f))
                     setTextColor(getColor(R.color.text_hint))
-                    setPadding(8, 4, 8, 4)
+                    setPadding(4, 2, 4, 2)
                     setOnClickListener {
                         closeTab(tab)
                     }
@@ -1081,26 +1107,21 @@ private fun setupWebView() {
                     updateTabsUI()
                 }
             }
-            tabsRow.addView(tabLayout)
-        }
 
-        val plusBtnSize = (32 * resources.displayMetrics.density).toInt()
-        val plusBtnMargin = (4 * resources.displayMetrics.density).toInt()
-        val plusBtnLayoutParams = LinearLayout.LayoutParams(plusBtnSize, plusBtnSize).apply {
-            marginStart = plusBtnMargin
-        }
-        val plusBtn = ImageButton(this).apply {
-            id = R.id.btn_new_tab
-            setBackgroundResource(android.R.attr.selectableItemBackgroundBorderless)
-            setImageDrawable(getDrawable(android.R.drawable.ic_input_add))
-            setColorFilter(getColor(R.color.accent))
-            contentDescription = "New tab"
-            setOnClickListener {
-                createNewTab()
+            val tabLp = LinearLayout.LayoutParams(tabWidthPx, LinearLayout.LayoutParams.MATCH_PARENT)
+            tabLp.setMargins(marginPx, 0, marginPx, 0)
+            tabLayout.layoutParams = tabLp
+
+            tabsRow.addView(tabLayout)
+
+            if (tab.id == currentTabId) {
+                tabsRow.addView(plusBtn)
             }
         }
-        plusBtn.layoutParams = plusBtnLayoutParams
-        tabsRow.addView(plusBtn)
+
+        if (!tabs.any { it.id == currentTabId }) {
+            tabsRow.addView(plusBtn)
+        }
     }
 
     private fun closeTab(tab: Tab) {
