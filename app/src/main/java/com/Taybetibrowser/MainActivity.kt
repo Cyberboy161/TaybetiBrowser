@@ -43,17 +43,6 @@ class NoSystemKeyboardWebView @JvmOverloads constructor(
 
     override fun onCheckIsTextEditor(): Boolean = true
 
-    override fun startActionMode(callback: ActionMode.Callback): ActionMode? {
-        return null
-    }
-
-    override fun startActionModeForChild(
-        originalView: View?,
-        callback: ActionMode.Callback?
-    ): ActionMode? {
-        return null
-    }
-
     fun clearSelection() {
         evaluateJavascript("window.getSelection().removeAllRanges();", null)
     }
@@ -131,16 +120,13 @@ class MainActivity : AppCompatActivity() {
         updateTabsUI()
     }
 
-private fun setupWebView() {
+    private fun setupWebView() {
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.loadWithOverviewMode = true
         settings.useWideViewPort = true
         settings.setSupportMultipleWindows(false)
-        webView.isLongClickable = false
-        webView.isHapticFeedbackEnabled = false
-        webView.setOnLongClickListener { true }
 
         if (prefs.spoofUserAgent) {
             settings.userAgentString = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"
@@ -241,28 +227,7 @@ private fun setupWebView() {
                 var selectionMarker = null;
                 var leftHandle = null;
                 var rightHandle = null;
-                var longPressTimer = null;
-                var longPressX = 0;
-                var longPressY = 0;
-                var isSelecting = false;
-
-                document.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                    return false;
-                }, true);
-
-                function findInput(el) {
-                    while (el && el.tagName !== 'BODY') {
-                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && !el.readOnly && el.type !== 'hidden') {
-                            return el;
-                        }
-                        if (el.isContentEditable && el.contentEditable !== 'false') {
-                            return el;
-                        }
-                        el = el.parentElement;
-                    }
-                    return null;
-                }
+                var popupVisible = false;
 
                 function removeSelectionUI() {
                     if (selectionMarker) { selectionMarker.remove(); selectionMarker = null; }
@@ -271,44 +236,6 @@ private fun setupWebView() {
                 }
 
                 window.__taybetiRemoveSelectionUI = removeSelectionUI;
-
-                function selectWordAtPoint(x, y) {
-                    var sel = window.getSelection();
-                    sel.removeAllRanges();
-
-                    var range = document.caretRangeFromPoint(x, y);
-                    if (!range) return false;
-
-                    var node = range.startContainer;
-                    if (node.nodeType !== Node.TEXT_NODE) return false;
-
-                    var text = node.textContent;
-                    var offset = range.startOffset;
-
-                    if (offset >= text.length) offset = text.length - 1;
-                    if (offset < 0) return false;
-
-                    var char = text[offset];
-                    if (char === ' ' || char === '\n' || char === '\t') return false;
-
-                    var start = offset;
-                    var end = offset;
-
-                    while (start > 0 && text[start - 1] !== ' ' && text[start - 1] !== '\n' && text[start - 1] !== '\t') {
-                        start--;
-                    }
-
-                    while (end < text.length && text[end] !== ' ' && text[end] !== '\n' && text[end] !== '\t') {
-                        end++;
-                    }
-
-                    var wordRange = document.createRange();
-                    wordRange.setStart(node, start);
-                    wordRange.setEnd(node, end);
-                    sel.addRange(wordRange);
-
-                    return sel.toString().length > 0;
-                }
 
                 function showSelectionUI() {
                     var selection = window.getSelection();
@@ -341,16 +268,8 @@ private fun setupWebView() {
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
                             'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         leftHandle.innerHTML = '◀';
-                        leftHandle.ontouchstart = function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.$jsInterfaceName.shrinkSelectionLeft();
-                        };
-                        leftHandle.onclick = function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.$jsInterfaceName.shrinkSelectionLeft();
-                        };
+                        leftHandle.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
+                        leftHandle.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
                         document.body.appendChild(leftHandle);
                     }
 
@@ -361,101 +280,35 @@ private fun setupWebView() {
                             'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
                             'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
                         rightHandle.innerHTML = '▶';
-                        rightHandle.ontouchstart = function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.$jsInterfaceName.expandSelectionRight();
-                        };
-                        rightHandle.onclick = function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.$jsInterfaceName.expandSelectionRight();
-                        };
+                        rightHandle.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
+                        rightHandle.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
                         document.body.appendChild(rightHandle);
                     }
 
                     var centerX = Math.round(rect.left + rect.width / 2);
                     var popupY = Math.round(rect.top - 10);
 
-                    window.$jsInterfaceName.showSelectionPopup(selectedText, centerX, popupY);
+                    if (!popupVisible) {
+                        popupVisible = true;
+                        window.$jsInterfaceName.showSelectionPopup(selectedText, centerX, popupY);
+                    }
                 }
 
-                document.addEventListener('click', function(e) {
-                    if (isSelecting) {
-                        isSelecting = false;
-                        return;
-                    }
-                    var input = findInput(e.target);
-                    if (input && input.id) {
-                        window.$jsInterfaceName.requestInputFocus(input.id);
-                    }
-                    removeSelectionUI();
-                    window.getSelection().removeAllRanges();
-                }, true);
-
-                document.addEventListener('touchstart', function(e) {
-                    var input = findInput(e.target);
-                    if (input) {
-                        if (longPressTimer) {
-                            clearTimeout(longPressTimer);
-                            longPressTimer = null;
-                        }
-                        e.preventDefault();
-                        var id = input.id || 'inp_' + Math.random().toString(36).substr(2, 9);
-                        if (!input.id) input.id = id;
-                        window.$jsInterfaceName.requestInputFocus(id);
-                        return;
-                    }
-
-                    longPressX = e.touches[0].clientX;
-                    longPressY = e.touches[0].clientY;
-
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                    }
-
-                    longPressTimer = setTimeout(function() {
-                        var result = selectWordAtPoint(longPressX, longPressY);
-                        if (result) {
-                            isSelecting = true;
-                            setTimeout(function() {
-                                showSelectionUI();
-                            }, 50);
-                        }
-                    }, 400);
-                }, {passive: false});
-
-                document.addEventListener('touchmove', function(e) {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-                }, {passive: true});
-
-                document.addEventListener('touchend', function(e) {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-
-                    setTimeout(function() {
+                var selectionTimeout = null;
+                document.addEventListener('selectionchange', function() {
+                    if (selectionTimeout) clearTimeout(selectionTimeout);
+                    selectionTimeout = setTimeout(function() {
                         var selection = window.getSelection();
-                        if (selection && selection.toString().trim().length > 0 && !isSelecting) {
+                        if (selection && selection.toString().trim().length > 0) {
+                            popupVisible = false;
                             showSelectionUI();
-                        } else if (!isSelecting) {
+                        } else {
                             removeSelectionUI();
+                            popupVisible = false;
+                            window.$jsInterfaceName.hideSelectionPopup();
                         }
-                        isSelecting = false;
-                    }, 300);
-                }, {passive: true});
-
-                document.addEventListener('touchcancel', function() {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-                    isSelecting = false;
-                }, {passive: true});
+                    }, 200);
+                });
             })();
         """.trimIndent(), null)
     }
@@ -948,6 +801,14 @@ private fun setupWebView() {
         }
 
         @JavascriptInterface
+        fun hideSelectionPopup() {
+            runOnUiThread {
+                currentSelectionPopup?.dismiss()
+                currentSelectionPopup = null
+            }
+        }
+
+        @JavascriptInterface
         fun shrinkSelectionLeft() {
             runOnUiThread {
                 webView.evaluateJavascript("""
@@ -958,25 +819,14 @@ private fun setupWebView() {
                                 var range = sel.getRangeAt(0);
                                 var startNode = range.startContainer;
                                 var startOffset = range.startOffset;
-
                                 if (startOffset > 0) {
                                     range.setStart(startNode, startOffset - 1);
-                                } else if (startNode.previousSibling) {
+                                } else if (startNode.previousSibling && startNode.previousSibling.nodeType === Node.TEXT_NODE) {
                                     var prev = startNode.previousSibling;
-                                    if (prev.nodeType === Node.TEXT_NODE) {
-                                        range.setStart(prev, prev.length - 1);
-                                    }
+                                    range.setStart(prev, prev.length - 1);
                                 }
-
-                                if (range.startOffset < range.endOffset) {
-                                    sel.removeAllRanges();
-                                    sel.addRange(range);
-                                    var text = sel.toString().trim();
-                                    if (text.length > 0) {
-                                        var rect = range.getBoundingClientRect();
-                                        window.$jsInterfaceName.updateSelectionUI(text, Math.round(rect.left + rect.width / 2), Math.round(rect.top - 10));
-                                    }
-                                }
+                                sel.removeAllRanges();
+                                sel.addRange(range);
                             }
                         } catch(e) {}
                     })();
@@ -995,93 +845,17 @@ private fun setupWebView() {
                                 var range = sel.getRangeAt(0);
                                 var endNode = range.endContainer;
                                 var endOffset = range.endOffset;
-
                                 if (endOffset < endNode.length) {
                                     range.setEnd(endNode, endOffset + 1);
                                 } else if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.TEXT_NODE) {
                                     range.setEnd(endNode.nextSibling, 1);
                                 }
-
-                                if (range.startOffset < range.endOffset) {
-                                    sel.removeAllRanges();
-                                    sel.addRange(range);
-                                    var text = sel.toString().trim();
-                                    if (text.length > 0) {
-                                        var rect = range.getBoundingClientRect();
-                                        window.$jsInterfaceName.updateSelectionUI(text, Math.round(rect.left + rect.width / 2), Math.round(rect.top - 10));
-                                    }
-                                }
+                                sel.removeAllRanges();
+                                sel.addRange(range);
                             }
                         } catch(e) {}
                     })();
                 """.trimIndent(), null)
-            }
-        }
-
-        @JavascriptInterface
-        fun updateSelectionUI(text: String, x: Int, y: Int) {
-            runOnUiThread {
-                if (!prefs.copyButton) return@runOnUiThread
-
-                webView.evaluateJavascript("""
-                    (function() {
-                        try {
-                            if (window.__taybetiRemoveSelectionUI) {
-                                window.__taybetiRemoveSelectionUI();
-                            }
-
-                            var sel = window.getSelection();
-                            if (!sel || sel.rangeCount === 0) return;
-
-                            var range = sel.getRangeAt(0);
-                            var rect = range.getBoundingClientRect();
-                            if (!rect || rect.width === 0) return;
-
-                            var marker = document.createElement('div');
-                            marker.style.cssText = 'position:fixed;pointer-events:none;z-index:999998;' +
-                                'left:' + rect.left + 'px;top:' + rect.top + 'px;' +
-                                'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
-                                'background:rgba(0,212,170,0.2);border:2px solid #00D4AA;border-radius:4px;';
-                            document.body.appendChild(marker);
-
-                            var leftRect = range.getClientRects()[0];
-                            var rightRect = range.getClientRects()[range.getClientRects().length - 1];
-
-                            if (leftRect) {
-                                var lh = document.createElement('div');
-                                lh.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
-                                    'left:' + (leftRect.left - 16) + 'px;top:' + (leftRect.top + leftRect.height/2 - 16) + 'px;' +
-                                    'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                                    'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
-                                lh.innerHTML = '◀';
-                                lh.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
-                                lh.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.shrinkSelectionLeft(); };
-                                document.body.appendChild(lh);
-                            }
-
-                            if (rightRect) {
-                                var rh = document.createElement('div');
-                                rh.style.cssText = 'position:fixed;z-index:999999;width:32px;height:32px;' +
-                                    'left:' + (rightRect.right - 16) + 'px;top:' + (rightRect.top + rightRect.height/2 - 16) + 'px;' +
-                                    'background:#00D4AA;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-                                    'color:#000;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
-                                rh.innerHTML = '▶';
-                                rh.ontouchstart = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
-                                rh.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.$jsInterfaceName.expandSelectionRight(); };
-                                document.body.appendChild(rh);
-                            }
-
-                            window.__taybetiRemoveSelectionUI = function() {
-                                if (marker) marker.remove();
-                                if (lh) lh.remove();
-                                if (rh) rh.remove();
-                            };
-                        } catch(e) {}
-                    })();
-                """.trimIndent(), null)
-
-                currentSelectionPopup?.dismiss()
-                displaySelectionPopup(text, x, y)
             }
         }
 
@@ -1096,6 +870,8 @@ private fun setupWebView() {
 
         private fun displaySelectionPopup(text: String, x: Int, y: Int) {
             if (!prefs.copyButton) return
+
+            currentSelectionPopup?.dismiss()
 
             val popupView = layoutInflater.inflate(R.layout.copy_popup, null)
             val popup = PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true).apply {
@@ -1126,9 +902,7 @@ private fun setupWebView() {
                 webView.evaluateJavascript("""
                     (function() {
                         var sel = window.getSelection();
-                        if (sel.rangeCount > 0) {
-                            sel.getRangeAt(0).deleteContents();
-                        }
+                        if (sel.rangeCount > 0) sel.getRangeAt(0).deleteContents();
                         if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();
                     })();
                 """.trimIndent(), null)
@@ -1141,9 +915,7 @@ private fun setupWebView() {
                 webView.evaluateJavascript("""
                     (function() {
                         var sel = window.getSelection();
-                        if (sel.rangeCount > 0) {
-                            sel.getRangeAt(0).deleteContents();
-                        }
+                        if (sel.rangeCount > 0) sel.getRangeAt(0).deleteContents();
                         if(window.__taybetiRemoveSelectionUI) window.__taybetiRemoveSelectionUI();
                     })();
                 """.trimIndent(), null)
